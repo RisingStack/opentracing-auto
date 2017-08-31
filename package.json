@@ -1,0 +1,67 @@
+{
+  "name": "@risingstack/opentracing-auto",
+  "version": "0.0.0",
+  "description": "Out of the box OpenTracing instrumentation for Node.js",
+  "main": "index.js",
+  "scripts": {
+    "main": "src/index.js",
+    "test": "mocha test/setup.js 'src/**/*.spec.js'",
+    "coverage": "nyc --reporter=html --reporter=text npm run test",
+    "lint": "eslint test src",
+    "example": "npm-run-all --parallel example-server1 example-server2",
+    "example-server1": "node example/server1",
+    "example-server2": "node example/server2"
+  },
+  "author": "RisingStack, Inc.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RisingStack/opentracing-auto.git"
+  },
+  "bugs": {
+    "url": "https://github.com/RisingStack/opentracing-auto/issues"
+  },
+  "homepage": "https://github.com/RisingStack/opentracing-auto#readme",
+  "keywords": [
+    "instrumentation",
+    "opentracing",
+    "tracing"
+  ],
+  "dependencies": {
+    "asyncctx": "1.0.1",
+    "lodash": "4.17.4",
+    "methods": "1.1.2",
+    "opentracing": "0.14.1",
+    "require-in-the-middle": "2.1.2",
+    "semver": "5.4.1",
+    "shimmer": "1.1.0",
+    "uuid": "3.1.0"
+  },
+  "devDependencies": {
+    "chai": "4.1.1",
+    "eslint": "4.5.0",
+    "eslint-config-airbnb-base": "11.3.2",
+    "eslint-plugin-import": "2.7.0",
+    "eslint-plugin-promise": "3.5.0",
+    "express": "4.15.4",
+    "jaeger-client": "3.5.3",
+    "knex": "0.13.0",
+    "mocha": "3.5.0",
+    "mongodb-core": "2.1.15",
+    "monk": "6.0.3",
+    "mysql": "2.14.1",
+    "nock": "9.0.14",
+    "npm-run-all": "4.1.1",
+    "nyc": "11.1.0",
+    "pg": "6.4.0",
+    "request": "2.81.0",
+    "request-promise-native": "1.0.4",
+    "restify": "5.2.0",
+    "sinon": "3.2.1",
+    "sinon-chai": "2.13.0",
+    "super-request": "1.2.0"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  }
+}

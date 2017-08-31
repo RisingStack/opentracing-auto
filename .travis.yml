@@ -1,0 +1,25 @@
+language: node_js
+cache:
+  directories:
+    - node_modules
+notifications:
+  email: false
+services:
+  - mongodb
+  - mysql
+  - postgresql
+node_js:
+  - 'stable'
+  - '8'
+env:
+  global:
+    - MYSQL_URI=mysql://root:@localhost/test
+    - PG_URI=postgres://postgres:@localhost:5432/test
+    - MONGODB_URI=mongodb://localhost/test
+before_script:
+  - mysql -e 'CREATE DATABASE IF NOT EXISTS test;'
+  - psql -c 'create database test;' -U postgres
+  - npm prune
+branches:
+  except:
+    - /^v\d+\.\d+\.\d+$/
