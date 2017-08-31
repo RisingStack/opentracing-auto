@@ -26,7 +26,8 @@ npm install @risingstack/opentracing-auto
 // must be in the first two lines of your application
 const instrument = require('@risingstack/opentracing-auto')
 const { Trace } = require('opentracing') // or any OpenTracing compatible tracer like jaeger-client
-const tracer = new Tracer()
+const tracer1 = new Tracer()
+const tracer2 = new Tracer()
 
 const instrument = new Instrument({
   tracers: [tracer1, tracer2]
