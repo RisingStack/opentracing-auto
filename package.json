@@ -2,9 +2,8 @@
   "name": "@risingstack/opentracing-auto",
   "version": "1.0.0",
   "description": "Out of the box OpenTracing instrumentation for Node.js",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
-    "main": "src/index.js",
     "test": "mocha test/setup.js 'src/**/*.spec.js'",
     "coverage": "nyc --reporter=html --reporter=text npm run test",
     "lint": "eslint test src",
