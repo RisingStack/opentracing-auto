@@ -1,5 +1,6 @@
 'use strict'
 
+const debug = require('debug')('opentracing-auto:instrumentation:expressError')
 const shimmer = require('shimmer')
 const opentracing = require('opentracing')
 const cls = require('../cls')
@@ -37,6 +38,8 @@ function patch (express, tracers) {
           // error span
           const spans = tracers.map((tracer) => cls.startChildSpan(tracer, OPERATION_NAME))
 
+          debug(`Operation started ${OPERATION_NAME}`)
+
           spans.forEach((span) => span.log({
             event: 'error',
             'error.object': err,
@@ -44,7 +47,14 @@ function patch (express, tracers) {
             stack: err.stack
           }))
           spans.forEach((span) => span.setTag(opentracing.Tags.ERROR, true))
+
+          debug(`Operation error captured ${OPERATION_NAME}`, {
+            reason: 'Error handler'
+          })
+
           spans.forEach((span) => span.finish())
+
+          debug(`Operation finished ${OPERATION_NAME}`)
 
           return originalHandleError.call(this, err, req, res, next)
         }
@@ -54,6 +64,8 @@ function patch (express, tracers) {
       return app
     }
   )
+
+  debug('Patched')
 }
 
 function unpatchLayer (layer) {
@@ -65,9 +77,12 @@ function unpatch (express) {
   shimmer.unwrap(express.Router, 'use')
 
   wrappedLayers.forEach(unpatchLayer)
+
+  debug('Unpatched')
 }
 
 module.exports = {
+  name: 'expressError',
   module: 'express',
   supportedVersions: ['4.x'],
   OPERATION_NAME,

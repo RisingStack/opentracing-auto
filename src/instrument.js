@@ -1,6 +1,7 @@
 'use strict'
 
 const path = require('path')
+const debug = require('debug')('opentracing-auto:instrument')
 const semver = require('semver')
 const _ = require('lodash')
 const hook = require('require-in-the-middle')
@@ -27,6 +28,8 @@ class Instrument {
     })
 
     this.patch()
+
+    debug(`Instrument created with ${this._tracers.length} tracer(s)`)
   }
 
   /**
@@ -62,10 +65,17 @@ class Instrument {
         .forEach((instrumentation) => {
           instrumentation.patch(moduleExports, this._tracers)
           this._instrumented.set(moduleExports, instrumentation)
+
+          debug(`Instrumentation "${instrumentation.name}" applied on module "${moduleName}"`, {
+            moduleVersion,
+            supportedVersions: instrumentation.supportedVersions
+          })
         })
 
       return moduleExports
     })
+
+    debug('Patched')
   }
 
   /**
@@ -76,6 +86,8 @@ class Instrument {
     this._instrumented.forEach((instrumentation, moduleExports) => {
       instrumentation.unpatch(moduleExports)
     })
+
+    debug('Unpatched')
   }
 }
 

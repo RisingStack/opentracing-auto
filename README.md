@@ -78,6 +78,10 @@ open http://localhost:16686
 
 ![Jaeger Node.js tracing](https://user-images.githubusercontent.com/1764512/26843812-c3198758-4af1-11e7-8aa3-1da55d9e58b6.png)
 
+## Debug
+
+Start your application with the `DEBUG=opentracing-auto*` environment variable.
+
 ## Feature ideas
 
 - More database instrumentation: Redis etc.

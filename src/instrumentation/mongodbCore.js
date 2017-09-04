@@ -1,6 +1,7 @@
 'use strict'
 
-const opentracing = require('opentracing')
+const debug = require('debug')('opentracing-auto:instrumentation:mongodb-core')
+const { Tags } = require('opentracing')
 const shimmer = require('shimmer')
 const cls = require('../cls')
 
@@ -11,9 +12,15 @@ function nextWrapFactory (tracers) {
   return function nextWrap (next) {
     return function nextTrace (cb) {
       const spans = tracers.map((tracer) => cls.startChildSpan(tracer, `${OPERATION_NAME}_cursor`))
+      const statement = JSON.stringify(this.cmd)
 
-      spans.forEach((span) => span.setTag(opentracing.Tags.DB_TYPE, DB_TYPE))
-      spans.forEach((span) => span.setTag(opentracing.Tags.DB_STATEMENT, JSON.stringify(this.cmd)))
+      debug(`Operation started ${OPERATION_NAME}`, {
+        [Tags.DB_TYPE]: DB_TYPE,
+        [Tags.DB_STATEMENT]: statement
+      })
+
+      spans.forEach((span) => span.setTag(Tags.DB_TYPE, DB_TYPE))
+      spans.forEach((span) => span.setTag(Tags.DB_STATEMENT, statement))
 
       return next.call(this, wrapCallback(tracers, spans, cb))
     }
@@ -29,10 +36,17 @@ function wrapCallback (tracers, spans, done) {
         message: err.message,
         stack: err.stack
       }))
-      spans.forEach((span) => span.setTag(opentracing.Tags.ERROR, true))
+      spans.forEach((span) => span.setTag(Tags.ERROR, true))
+
+      debug(`Operation error captured ${OPERATION_NAME}`, {
+        reason: 'Error event',
+        errorMessage: err.message
+      })
     }
 
     spans.forEach((span) => span.finish())
+
+    debug(`Operation finished ${OPERATION_NAME}`)
 
     if (done) {
       done(err, res)
@@ -46,10 +60,17 @@ function wrapFactory (tracers, command) {
   return function (original) {
     return function mongoOperationTrace (ns, ops, options, callback) {
       const spans = tracers.map((tracer) => cls.startChildSpan(tracer, `${OPERATION_NAME}_${command}`))
+      const statement = JSON.stringify(ops)
 
-      spans.forEach((span) => span.setTag(opentracing.Tags.DB_TYPE, DB_TYPE))
-      spans.forEach((span) => span.setTag(opentracing.Tags.DB_STATEMENT, JSON.stringify(ops)))
-      spans.forEach((span) => span.setTag(opentracing.Tags.DB_INSTANCE, ns))
+      debug(`Operation started ${OPERATION_NAME}`, {
+        [Tags.DB_TYPE]: DB_TYPE,
+        [Tags.DB_STATEMENT]: statement,
+        [Tags.DB_INSTANCE]: ns
+      })
+
+      spans.forEach((span) => span.setTag(Tags.DB_TYPE, DB_TYPE))
+      spans.forEach((span) => span.setTag(Tags.DB_STATEMENT, statement))
+      spans.forEach((span) => span.setTag(Tags.DB_INSTANCE, ns))
 
       if (typeof options === 'function') {
         return original.call(this, ns, ops, wrapCallback(tracers, spans, options))
@@ -66,6 +87,8 @@ function patch (mongodb, tracer) {
   shimmer.wrap(mongodb.Server.prototype, 'update', wrapFactory(tracer, 'update'))
   shimmer.wrap(mongodb.Server.prototype, 'remove', wrapFactory(tracer, 'remove'))
   shimmer.wrap(mongodb.Cursor.prototype, 'next', nextWrapFactory(tracer))
+
+  debug('Patched')
 }
 
 function unpatch (mongodb) {
@@ -74,9 +97,12 @@ function unpatch (mongodb) {
   shimmer.unwrap(mongodb.Server.prototype, 'update')
   shimmer.unwrap(mongodb.Server.prototype, 'remove')
   shimmer.unwrap(mongodb.Cursor.prototype, 'next')
+
+  debug('Unpatched')
 }
 
 module.exports = {
+  name: 'mongodbCore',
   module: 'mongodb-core',
   supportedVersions: ['1.x', '2.x'],
   OPERATION_NAME,

@@ -1,7 +1,8 @@
 'use strict'
 
 const url = require('url')
-const opentracing = require('opentracing')
+const debug = require('debug')('opentracing-auto:instrumentation:httpClient')
+const { Tags, FORMAT_HTTP_HEADERS } = require('opentracing')
 const shimmer = require('shimmer')
 const _ = require('lodash')
 // eslint-disable-next-line
@@ -42,16 +43,22 @@ function patch (http, tracers) {
       }
 
       const spans = tracers.map((tracer) => cls.startChildSpan(tracer, OPERATION_NAME))
+      const uri = extractUrl(options)
+      const method = options.method || 'GET'
+
+      debug(`Operation started ${OPERATION_NAME}`, {
+        [Tags.HTTP_URL]: uri,
+        [Tags.HTTP_METHOD]: method
+      })
 
       options = _.isString(options) ? url.parse(options) : _.merge({}, options)
       options.headers = options.headers || {}
 
-      tracers.forEach((tracer, key) => tracer.inject(spans[key], opentracing.FORMAT_HTTP_HEADERS, options.headers))
+      tracers.forEach((tracer, key) => tracer.inject(spans[key], FORMAT_HTTP_HEADERS, options.headers))
 
-      const uri = extractUrl(options)
-      spans.forEach((span) => span.setTag(opentracing.Tags.HTTP_URL, uri))
-      spans.forEach((span) => span.setTag(opentracing.Tags.HTTP_METHOD, options.method || 'GET'))
-      spans.forEach((span) => span.setTag(opentracing.Tags.SPAN_KIND_RPC_CLIENT, true))
+      spans.forEach((span) => span.setTag(Tags.HTTP_URL, uri))
+      spans.forEach((span) => span.setTag(Tags.HTTP_METHOD, method))
+      spans.forEach((span) => span.setTag(Tags.SPAN_KIND_RPC_CLIENT, true))
 
       const req = request.call(this, options, (res) => {
         const headers = _.omitBy(
@@ -60,12 +67,21 @@ function patch (http, tracers) {
         )
 
         if (res.statusCode > 399) {
-          spans.forEach((span) => span.setTag(opentracing.Tags.ERROR, true))
+          spans.forEach((span) => span.setTag(Tags.ERROR, true))
+
+          debug(`Operation error captured ${OPERATION_NAME}`, {
+            reason: 'Bad status code',
+            statusCode: res.statusCode
+          })
         }
 
-        spans.forEach((span) => span.setTag(opentracing.Tags.HTTP_STATUS_CODE, res.statusCode))
+        spans.forEach((span) => span.setTag(Tags.HTTP_STATUS_CODE, res.statusCode))
         spans.forEach((span) => span.log({ headers }))
         spans.forEach((span) => span.finish())
+
+        debug(`Operation finished ${OPERATION_NAME}`, {
+          [Tags.HTTP_STATUS_CODE]: res.statusCode
+        })
 
         if (callback) {
           callback(res)
@@ -73,7 +89,7 @@ function patch (http, tracers) {
       })
 
       req.on('error', (err) => {
-        spans.forEach((span) => span.setTag(opentracing.Tags.ERROR, true))
+        spans.forEach((span) => span.setTag(Tags.ERROR, true))
 
         if (err) {
           spans.forEach((span) => span.log({
@@ -82,6 +98,11 @@ function patch (http, tracers) {
             message: err.message,
             stack: err.stack
           }))
+
+          debug(`Operation error captured ${OPERATION_NAME}`, {
+            reason: 'Error event',
+            errorMessage: err.message
+          })
         }
 
         spans.forEach((span) => span.finish())
@@ -89,6 +110,8 @@ function patch (http, tracers) {
       return req
     }
   }
+
+  debug('Patched')
 }
 
 function unpatch (http) {
@@ -97,9 +120,12 @@ function unpatch (http) {
   if (semver.satisfies(process.version, '>=8.0.0')) {
     shimmer.unwrap(http, 'get')
   }
+
+  debug('Unpatched')
 }
 
 module.exports = {
+  name: 'httpClient',
   module: 'http',
   OPERATION_NAME,
   patch,

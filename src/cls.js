@@ -1,5 +1,6 @@
 'use strict'
 
+const debug = require('debug')('opentracing-auto:cls')
 const { ContinuationLocalStorage } = require('asyncctx')
 const _ = require('lodash')
 
@@ -64,6 +65,8 @@ function startRootSpan (tracer, operationName, parentSpanContext) {
     currentSpan: span
   })
 
+  debug('Root span started')
+
   return span
 }
 
@@ -89,6 +92,8 @@ function startChildSpan (tracer, operationName) {
       ? parentSpanContext
       : undefined
   })
+
+  debug('Child span started')
 
   return span
 }

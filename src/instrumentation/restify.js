@@ -1,6 +1,7 @@
 'use strict'
 
-const opentracing = require('opentracing')
+const debug = require('debug')('opentracing-auto:instrumentation:restify')
+const { Tags, FORMAT_HTTP_HEADERS } = require('opentracing')
 const shimmer = require('shimmer')
 const cls = require('../cls')
 
@@ -18,14 +19,19 @@ function patch (restify, tracers) {
 
   function middleware (req, res, next) {
     // start
-    const parentSpanContexts = tracers.map((tracer) => tracer.extract(opentracing.FORMAT_HTTP_HEADERS, req.headers))
+    const parentSpanContexts = tracers.map((tracer) => tracer.extract(FORMAT_HTTP_HEADERS, req.headers))
     const spans = parentSpanContexts.map((parentSpanContext, key) =>
       cls.startRootSpan(tracers[key], OPERATION_NAME, parentSpanContext)
     )
 
-    spans.forEach((span) => span.setTag(opentracing.Tags.HTTP_URL, req.url))
-    spans.forEach((span) => span.setTag(opentracing.Tags.HTTP_METHOD, req.method))
-    spans.forEach((span) => span.setTag(opentracing.Tags.SPAN_KIND_RPC_SERVER, true))
+    debug(`Operation started ${OPERATION_NAME}`, {
+      [Tags.HTTP_URL]: req.url,
+      [Tags.HTTP_METHOD]: req.method
+    })
+
+    spans.forEach((span) => span.setTag(Tags.HTTP_URL, req.url))
+    spans.forEach((span) => span.setTag(Tags.HTTP_METHOD, req.method))
+    spans.forEach((span) => span.setTag(Tags.SPAN_KIND_RPC_SERVER, true))
 
     if (req.connection.remoteAddress) {
       spans.forEach((span) => span.log({ peerRemoteAddress: req.connection.remoteAddress }))
@@ -39,13 +45,22 @@ function patch (restify, tracers) {
       const returned = res.end.call(this, ...args)
 
       spans.forEach((span) => span.setTag(TAG_REQUEST_PATH, req.path()))
-      spans.forEach((span) => span.setTag(opentracing.Tags.HTTP_STATUS_CODE, res.statusCode))
+      spans.forEach((span) => span.setTag(Tags.HTTP_STATUS_CODE, res.statusCode))
 
       if (res.statusCode >= 400) {
-        spans.forEach((span) => span.setTag(opentracing.Tags.ERROR, true))
+        spans.forEach((span) => span.setTag(Tags.ERROR, true))
+
+        debug(`Operation error captured ${OPERATION_NAME}`, {
+          reason: 'Bad status code',
+          statusCode: res.statusCode
+        })
       }
 
       spans.forEach((span) => span.finish())
+
+      debug(`Operation finished ${OPERATION_NAME}`, {
+        [Tags.HTTP_STATUS_CODE]: res.statusCode
+      })
 
       return returned
     }
@@ -54,13 +69,18 @@ function patch (restify, tracers) {
   }
 
   shimmer.wrap(restify, 'createServer', createServerWrap)
+
+  debug('Patched')
 }
 
 function unpatch (restify) {
   shimmer.unwrap(restify, 'createServer')
+
+  debug('Unpatched')
 }
 
 module.exports = {
+  name: 'restify',
   module: 'restify',
   supportedVersions: ['5.x'],
   TAG_REQUEST_PATH,
