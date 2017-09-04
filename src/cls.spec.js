@@ -68,8 +68,7 @@ describe('cls', () => {
     })
 
     it('should skip invalid parent', () => {
-      const parentSpanContext = { isValid: false }
-      cls.startRootSpan(tracer, 'http_request', parentSpanContext)
+      cls.startRootSpan(tracer, 'http_request')
 
       expect(tracer.startSpan).to.be.calledWithExactly('http_request', {
         childOf: undefined
@@ -105,15 +104,14 @@ describe('cls', () => {
     })
 
     it('should skip invalid parent', () => {
-      const parentSpanContext = { isValid: false }
       cls.setContext({
         [tracer.__clsNamespace]: {
           currentSpan: {
-            context: () => parentSpanContext
+            context: () => {}
           }
         }
       })
-      cls.startChildSpan(tracer, 'http_request', parentSpanContext)
+      cls.startChildSpan(tracer, 'http_request', undefined)
 
       expect(tracer.startSpan).to.be.calledWithExactly('http_request', {
         childOf: undefined

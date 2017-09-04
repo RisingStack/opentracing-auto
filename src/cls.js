@@ -56,9 +56,7 @@ function startRootSpan (tracer, operationName, parentSpanContext) {
   }
 
   const span = tracer.startSpan(operationName, {
-    childOf: parentSpanContext && parentSpanContext.isValid
-      ? parentSpanContext
-      : undefined
+    childOf: parentSpanContext
   })
 
   cls.assign(tracer, {
@@ -88,9 +86,7 @@ function startChildSpan (tracer, operationName) {
   const parentSpanContext = parentSpan ? parentSpan.context() : undefined
 
   const span = tracer.startSpan(operationName, {
-    childOf: parentSpanContext && parentSpanContext.isValid
-      ? parentSpanContext
-      : undefined
+    childOf: parentSpanContext
   })
 
   debug('Child span started')
