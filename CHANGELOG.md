@@ -1,3 +1,12 @@
+<a name="1.2.1"></a>
+### 1.2.1 (2017-09-04)
+
+
+#### Bug Fixes
+
+* **cls:** do not use spanContext internals as it is tracer specific ([738909eb](git+https://github.com/RisingStack/opentracing-auto.git/commit/738909eb))
+
+
 <a name="1.2.0"></a>
 ## 1.2.0 (2017-09-04)
 
