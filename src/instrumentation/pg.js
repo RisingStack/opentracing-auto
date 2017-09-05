@@ -11,12 +11,13 @@ const OPERATION_NAME = 'pg'
 function patch (pg, tracers) {
   function queryWrap (query) {
     return function queryTrace (...args) {
-      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, `${OPERATION_NAME}_query`))
+      const operationName = `${OPERATION_NAME}_query`
+      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, operationName))
       const pgQuery = query.call(this, ...args)
       const originalCallback = pgQuery.callback
       const statement = pgQuery.text
 
-      debug(`Operation started ${OPERATION_NAME}`, {
+      debug(`Operation started ${operationName}`, {
         [Tags.DB_TYPE]: DB_TYPE,
         [Tags.DB_STATEMENT]: statement
       })
@@ -34,7 +35,7 @@ function patch (pg, tracers) {
           }))
           spans.forEach((span) => span.setTag(Tags.ERROR, true))
 
-          debug(`Operation error captured ${OPERATION_NAME}`, {
+          debug(`Operation error captured ${operationName}`, {
             reason: 'Error event',
             errorMessage: err.message
           })
@@ -48,7 +49,7 @@ function patch (pg, tracers) {
 
         spans.forEach((span) => span.finish())
 
-        debug(`Operation finished ${OPERATION_NAME}`)
+        debug(`Operation finished ${operationName}`)
 
         if (originalCallback) {
           originalCallback(err, res)

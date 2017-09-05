@@ -15,7 +15,8 @@ function patch (mysql, tracers) {
 
   function createQueryWrap (createQuery) {
     return function createQueryWrapped (sql, values, cb) {
-      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, `${OPERATION_NAME}_query`))
+      const operationName = `${OPERATION_NAME}_query`
+      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, operationName))
       const query = createQuery.call(this, sql, values, cb)
       const statement = query.sql
 
@@ -36,7 +37,7 @@ function patch (mysql, tracers) {
         }))
         spans.forEach((span) => span.setTag(Tags.ERROR, true))
 
-        debug(`Operation error captured ${OPERATION_NAME}`, {
+        debug(`Operation error captured ${operationName}`, {
           reason: 'Error event',
           errorMessage: err.message
         })
@@ -45,7 +46,7 @@ function patch (mysql, tracers) {
       query.on('end', () => {
         spans.forEach((span) => span.finish())
 
-        debug(`Operation finished ${OPERATION_NAME}`)
+        debug(`Operation finished ${operationName}`)
       })
 
       return query

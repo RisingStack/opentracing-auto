@@ -11,7 +11,8 @@ const OPERATION_NAME = 'mongodb'
 function nextWrapFactory (tracers) {
   return function nextWrap (next) {
     return function nextTrace (cb) {
-      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, `${OPERATION_NAME}_cursor`))
+      const operationName = `${OPERATION_NAME}_cursor`
+      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, operationName))
       const statement = JSON.stringify(this.cmd)
 
       debug(`Operation started ${OPERATION_NAME}`, {
@@ -22,12 +23,12 @@ function nextWrapFactory (tracers) {
       spans.forEach((span) => span.setTag(Tags.DB_TYPE, DB_TYPE))
       spans.forEach((span) => span.setTag(Tags.DB_STATEMENT, statement))
 
-      return next.call(this, wrapCallback(tracers, spans, cb))
+      return next.call(this, wrapCallback(tracers, spans, operationName, cb))
     }
   }
 }
 
-function wrapCallback (tracers, spans, done) {
+function wrapCallback (tracers, spans, operationName, done) {
   const fn = function (err, res) {
     if (err) {
       spans.forEach((span) => span.log({
@@ -38,7 +39,7 @@ function wrapCallback (tracers, spans, done) {
       }))
       spans.forEach((span) => span.setTag(Tags.ERROR, true))
 
-      debug(`Operation error captured ${OPERATION_NAME}`, {
+      debug(`Operation error captured ${operationName}`, {
         reason: 'Error event',
         errorMessage: err.message
       })
@@ -46,7 +47,7 @@ function wrapCallback (tracers, spans, done) {
 
     spans.forEach((span) => span.finish())
 
-    debug(`Operation finished ${OPERATION_NAME}`)
+    debug(`Operation finished ${operationName}`)
 
     if (done) {
       done(err, res)
@@ -59,10 +60,11 @@ function wrapCallback (tracers, spans, done) {
 function wrapFactory (tracers, command) {
   return function (original) {
     return function mongoOperationTrace (ns, ops, options, callback) {
-      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, `${OPERATION_NAME}_${command}`))
+      const operationName = `${OPERATION_NAME}_${command}`
+      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, operationName))
       const statement = JSON.stringify(ops)
 
-      debug(`Operation started ${OPERATION_NAME}`, {
+      debug(`Operation started ${operationName}`, {
         [Tags.DB_TYPE]: DB_TYPE,
         [Tags.DB_STATEMENT]: statement,
         [Tags.DB_INSTANCE]: ns
@@ -73,10 +75,10 @@ function wrapFactory (tracers, command) {
       spans.forEach((span) => span.setTag(Tags.DB_INSTANCE, ns))
 
       if (typeof options === 'function') {
-        return original.call(this, ns, ops, wrapCallback(tracers, spans, options))
+        return original.call(this, ns, ops, wrapCallback(tracers, spans, operationName, options))
       }
 
-      return original.call(this, ns, ops, options, wrapCallback(tracers, spans, callback))
+      return original.call(this, ns, ops, options, wrapCallback(tracers, spans, operationName, callback))
     }
   }
 }
