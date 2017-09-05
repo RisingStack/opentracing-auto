@@ -1,6 +1,6 @@
 {
   "name": "@risingstack/opentracing-auto",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "Out of the box OpenTracing instrumentation for Node.js",
   "main": "src/index.js",
   "scripts": {
