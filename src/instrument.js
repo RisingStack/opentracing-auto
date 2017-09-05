@@ -54,6 +54,7 @@ class Instrument {
       instrumentations
         .filter((instrumentation) => instrumentation.module === moduleName)
         .filter((instrumentation) => {
+          // Core modules don't have version number
           if (_.isUndefined(moduleVersion) || !_.isArray(instrumentation.supportedVersions)) {
             return true
           }

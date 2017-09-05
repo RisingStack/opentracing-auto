@@ -87,6 +87,7 @@ describe('instrumentation: httpClient', () => {
             message: err.cause.message,
             stack: err.cause.stack
           })
+          expect(mockChildSpan.finish).to.have.callCount(1)
         })
     })
   })

@@ -44,6 +44,9 @@ describe('instrumentation: pg', () => {
       expect(cls.startChildSpan).to.be.calledWith(tracer, `${instrumentation.OPERATION_NAME}_query`)
       expect(mockChildSpan.setTag).to.have.calledWith(Tags.DB_TYPE, instrumentation.DB_TYPE)
       expect(mockChildSpan.setTag).to.have.calledWith(Tags.DB_STATEMENT, query)
+
+      // FIXME: only with ../instrument.js tests together
+      // expect(mockChildSpan.finish).to.have.callCount(1)
     })
 
     it('should flag error', async () => {
@@ -59,6 +62,8 @@ describe('instrumentation: pg', () => {
           message: 'column "invalid" does not exist',
           stack: err.stack
         })
+        // FIXME: only with ../instrument.js tests together
+        // expect(mockChildSpan.finish).to.have.callCount(1)
         return
       }
 

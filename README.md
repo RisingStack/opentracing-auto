@@ -56,9 +56,10 @@ Unpatch instrumentations
 - [http, https](https://nodejs.org/api/http.html)
 - [express](https://expressjs.com/)
 - [restify](http://restify.com/)
-- [MongoDB](https://www.npmjs.com/package/mongodb-core)
-- [PostgreSQL](https://www.npmjs.com/package/pg)
-- [MySQL](https://www.npmjs.com/package/mysql)
+- [mongodb-core](https://www.npmjs.com/package/mongodb-core)
+- [pg](https://www.npmjs.com/package/pg)
+- [mysql](https://www.npmjs.com/package/mysql)
+- [redis](https://www.npmjs.com/package/redis)
 
 ## Example
 

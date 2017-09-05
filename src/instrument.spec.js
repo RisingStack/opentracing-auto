@@ -5,6 +5,7 @@ const { Tracer } = require('opentracing')
 const Instrument = require('./instrument')
 const instrumentationExpress = require('./instrumentation/express')
 const instrumentationHTTPClient = require('./instrumentation/httpClient')
+const instrumentationMySQL = require('./instrumentation/mysql')
 
 describe('Instrument', () => {
   let instrument
@@ -17,6 +18,7 @@ describe('Instrument', () => {
     it('should hook require and apply instrumentation', function () {
       this.sandbox.spy(instrumentationExpress, 'patch')
       this.sandbox.spy(instrumentationHTTPClient, 'patch')
+      this.sandbox.spy(instrumentationMySQL, 'patch')
 
       const tracer1 = new Tracer()
       const tracer2 = new Tracer()
@@ -31,6 +33,9 @@ describe('Instrument', () => {
 
       expect(instrumentationExpress.patch).to.be.calledWith(express, [tracer1, tracer2])
       expect(instrumentationHTTPClient.patch).to.be.calledWith(http, [tracer1, tracer2])
+
+      // not required
+      expect(instrumentationMySQL.patch).to.be.callCount(0)
     })
 
     it('should not apply instrumentation for not supported version', function () {

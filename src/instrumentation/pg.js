@@ -7,15 +7,23 @@ const cls = require('../cls')
 
 const DB_TYPE = 'postgresql'
 const OPERATION_NAME = 'pg'
+const UNTRACKED_QUERIES = [
+  'select version();'
+]
 
 function patch (pg, tracers) {
   function queryWrap (query) {
     return function queryTrace (...args) {
-      const operationName = `${OPERATION_NAME}_query`
-      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, operationName))
       const pgQuery = query.call(this, ...args)
       const originalCallback = pgQuery.callback
       const statement = pgQuery.text
+
+      if (UNTRACKED_QUERIES.includes(statement)) {
+        return pgQuery
+      }
+
+      const operationName = `${OPERATION_NAME}_query`
+      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, operationName))
 
       debug(`Operation started ${operationName}`, {
         [Tags.DB_TYPE]: DB_TYPE,

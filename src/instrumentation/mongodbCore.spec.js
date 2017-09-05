@@ -46,6 +46,7 @@ describe('instrumentation: mongodb-core', () => {
       expect(cls.startChildSpan).to.be.calledWith(tracer, `${instrumentation.OPERATION_NAME}_insert`)
       expect(mockChildSpan.setTag).to.have.calledWith(Tags.DB_TYPE, instrumentation.DB_TYPE)
       expect(mockChildSpan.setTag).to.have.calledWith(Tags.DB_STATEMENT, JSON.stringify([site]))
+      expect(mockChildSpan.finish).to.have.callCount(1)
     })
 
     it('should flag error', async () => {
@@ -64,6 +65,7 @@ describe('instrumentation: mongodb-core', () => {
           message: err.message,
           stack: err.stack
         })
+        expect(mockChildSpan.finish).to.have.callCount(1)
         return
       }
 
