@@ -1,3 +1,17 @@
+<a name="1.3.0"></a>
+## 1.3.0 (2017-09-05)
+
+
+#### Bug Fixes
+
+* **instrumentation:** debug operation name in pg, msql and mongodb-core ([4560ddda](git+https://github.com/RisingStack/opentracing-auto.git/commit/4560ddda))
+
+
+#### Features
+
+* **instrumentation:** add redis ([156c49b3](git+https://github.com/RisingStack/opentracing-auto.git/commit/156c49b3))
+
+
 <a name="1.2.1"></a>
 ### 1.2.1 (2017-09-04)
 
