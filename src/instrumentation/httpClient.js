@@ -127,17 +127,17 @@ function patch (http, tracers, { httpTimings } = {}) {
 
       timings.begin = Date.now()
 
-      const req = request.call(this, options, (res) => {
-        function finish () {
-          if (httpTimings) {
-            timings.end = Date.now()
-            addTimings(tracers, spans, timings)
-          }
-
-          spans.forEach((span) => span.finish())
-          isFinish = true
+      function finish () {
+        if (httpTimings) {
+          timings.end = Date.now()
+          addTimings(tracers, spans, timings)
         }
 
+        spans.forEach((span) => span.finish())
+        isFinish = true
+      }
+
+      const req = request.call(this, options, (res) => {
         if (res.statusCode > 399) {
           spans.forEach((span) => span.setTag(Tags.ERROR, true))
 
@@ -188,7 +188,7 @@ function patch (http, tracers, { httpTimings } = {}) {
         socket.on('close', () => {
           // End event is not emitted when stream is not consumed fully
           if (!isFinish) {
-            spans.forEach((span) => span.finish())
+            finish()
           }
         })
       })
