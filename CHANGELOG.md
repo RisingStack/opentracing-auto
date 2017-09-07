@@ -1,3 +1,12 @@
+<a name="1.4.0"></a>
+## 1.4.0 (2017-09-07)
+
+
+#### Features
+
+* **instrumentation:** add http timings ([f9bd79ae](git+https://github.com/RisingStack/opentracing-auto.git/commit/f9bd79ae))
+
+
 <a name="1.3.0"></a>
 ## 1.3.0 (2017-09-05)
 
