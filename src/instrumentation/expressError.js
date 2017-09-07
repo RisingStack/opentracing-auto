@@ -57,13 +57,11 @@ function patch (express, tracers) {
           debug(`Operation finished ${OPERATION_NAME}`)
 
           return originalHandleError.call(this, err, req, res, next)
-        }
-      )
+        })
       wrappedLayers.add(lastLayer)
 
       return app
-    }
-  )
+    })
 
   debug('Patched')
 }

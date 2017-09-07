@@ -60,8 +60,7 @@ class Instrument {
           }
 
           return instrumentation.supportedVersions.some((supportedVersion) =>
-            semver.satisfies(moduleVersion, supportedVersion)
-          )
+            semver.satisfies(moduleVersion, supportedVersion))
         })
         .forEach((instrumentation) => {
           instrumentation.patch(moduleExports, this._tracers)

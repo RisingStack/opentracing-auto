@@ -59,8 +59,7 @@ describe('instrumentation: httpClient', () => {
           expect(mockChildSpan.setTag).to.have.calledWith(Tags.SPAN_KIND_RPC_CLIENT, true)
           expect(mockChildSpan.setTag).to.have.calledWith(Tags.HTTP_STATUS_CODE, 200)
           expect(mockChildSpan.finish).to.have.callCount(1)
-        })
-    )
+        }))
 
     it('should flag wrong status codes as error', () => {
       nock('http://risingstack.com')

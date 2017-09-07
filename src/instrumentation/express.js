@@ -25,8 +25,7 @@ function patch (express, tracers) {
     const url = `${req.protocol}://${req.hostname}${req.originalUrl}`
     const parentSpanContexts = tracers.map((tracer) => tracer.extract(FORMAT_HTTP_HEADERS, req.headers))
     const spans = parentSpanContexts.map((parentSpanContext, key) =>
-      cls.startRootSpan(tracers[key], OPERATION_NAME, parentSpanContext)
-    )
+      cls.startRootSpan(tracers[key], OPERATION_NAME, parentSpanContext))
     debug(`Operation started ${OPERATION_NAME}`, {
       [Tags.HTTP_URL]: url,
       [Tags.HTTP_METHOD]: req.method
