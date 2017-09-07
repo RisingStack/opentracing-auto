@@ -33,7 +33,9 @@ app.get('/', (req, res, next) => {
         return
       }
 
-      res.send('Hello World!')
+      res.on('end', () => {
+        res.send('Hello World!')
+      })
     })
     .on('error', (err) => {
       next(err)

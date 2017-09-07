@@ -21,45 +21,60 @@ describe('instrumentation: httpClient', () => {
     }
 
     this.sandbox.stub(cls, 'startChildSpan').callsFake(() => mockChildSpan)
-
-    instrumentation.patch(http, [tracer])
   })
 
   afterEach(() => {
-    instrumentation.unpatch(http)
     nock.cleanAll()
   })
 
   describe('#patch', () => {
-    it('should start and finish span with http', () => {
+    beforeEach(() => {
+      instrumentation.patch(http, [tracer])
+    })
+
+    afterEach(() => {
+      instrumentation.unpatch(http)
+    })
+
+    it('should start and finish span with http', async () => {
       nock('http://risingstack.com')
         .get('/')
         .reply(200)
 
-      return request('http://risingstack.com')
-        .then(() => {
-          expect(cls.startChildSpan).to.be.calledWith(tracer, instrumentation.OPERATION_NAME)
-          expect(mockChildSpan.setTag).to.have.calledWith(Tags.HTTP_URL, 'http://risingstack.com:80')
-          expect(mockChildSpan.setTag).to.have.calledWith(Tags.HTTP_METHOD, 'GET')
-          expect(mockChildSpan.setTag).to.have.calledWith(Tags.SPAN_KIND_RPC_CLIENT, true)
-          expect(mockChildSpan.setTag).to.have.calledWith(Tags.HTTP_STATUS_CODE, 200)
-          expect(mockChildSpan.finish).to.have.callCount(1)
-        })
+      await request('http://risingstack.com')
+
+      expect(cls.startChildSpan).to.be.calledWith(tracer, instrumentation.OPERATION_NAME)
+      expect(mockChildSpan.setTag).to.have.calledWith(Tags.HTTP_URL, 'http://risingstack.com:80')
+      expect(mockChildSpan.setTag).to.have.calledWith(Tags.HTTP_METHOD, 'GET')
+      expect(mockChildSpan.setTag).to.have.calledWith(Tags.SPAN_KIND_RPC_CLIENT, true)
+      expect(mockChildSpan.setTag).to.have.calledWith(Tags.HTTP_STATUS_CODE, 200)
+      expect(mockChildSpan.finish).to.have.callCount(1)
     })
 
-    it('should start and finish span with https', () =>
+    it('should finish span when response is not in flow mode', (done) => {
+      // nock doesn't emit socket close
+      http.get('http://risingstack.com', (res) => {
+        res.socket.on('close', () => {
+          expect(mockChildSpan.finish).to.have.callCount(1)
+          done()
+        })
+      })
+        .on('error', done)
+    })
+
+    it('should start and finish span with https', async () => {
       // WARNING: nock doesn't work well with https instrumentation
       // create real request
 
-      request('https://risingstack.com')
-        .then(() => {
-          expect(cls.startChildSpan).to.be.calledWith(tracer, instrumentation.OPERATION_NAME)
-          expect(mockChildSpan.setTag).to.have.calledWith(Tags.HTTP_URL, 'https://risingstack.com:443')
-          expect(mockChildSpan.setTag).to.have.calledWith(Tags.HTTP_METHOD, 'GET')
-          expect(mockChildSpan.setTag).to.have.calledWith(Tags.SPAN_KIND_RPC_CLIENT, true)
-          expect(mockChildSpan.setTag).to.have.calledWith(Tags.HTTP_STATUS_CODE, 200)
-          expect(mockChildSpan.finish).to.have.callCount(1)
-        }))
+      await request('https://risingstack.com')
+
+      expect(cls.startChildSpan).to.be.calledWith(tracer, instrumentation.OPERATION_NAME)
+      expect(mockChildSpan.setTag).to.have.calledWith(Tags.HTTP_URL, 'https://risingstack.com:443')
+      expect(mockChildSpan.setTag).to.have.calledWith(Tags.HTTP_METHOD, 'GET')
+      expect(mockChildSpan.setTag).to.have.calledWith(Tags.SPAN_KIND_RPC_CLIENT, true)
+      expect(mockChildSpan.setTag).to.have.calledWith(Tags.HTTP_STATUS_CODE, 200)
+      expect(mockChildSpan.finish).to.have.callCount(1)
+    })
 
     it('should flag wrong status codes as error', () => {
       nock('http://risingstack.com')
@@ -88,6 +103,28 @@ describe('instrumentation: httpClient', () => {
           })
           expect(mockChildSpan.finish).to.have.callCount(1)
         })
+    })
+  })
+
+  describe('httpTimings option', () => {
+    beforeEach(() => {
+      instrumentation.patch(http, [tracer], { httpTimings: true })
+    })
+
+    afterEach(() => {
+      instrumentation.unpatch(http)
+    })
+
+    it('should add HTTP timings when response is in flow mode', async function () {
+      this.sandbox.spy(tracer, 'startSpan')
+
+      await request('http://risingstack.com')
+
+      expect(tracer.startSpan).to.be.calledWith(instrumentation.OPERATION_NAME_DNS_LOOKUP)
+      expect(tracer.startSpan).to.be.calledWith(instrumentation.OPERATION_NAME_CONNECTION)
+      expect(tracer.startSpan).to.be.calledWith(instrumentation.OPERATION_NAME_SSL)
+      expect(tracer.startSpan).to.be.calledWith(instrumentation.OPERATION_NAME_TIME_TO_FIRST_BYTE)
+      expect(tracer.startSpan).to.be.calledWith(instrumentation.OPERATION_NAME_CONTENT_TRANSFER)
     })
   })
 })
