@@ -13,7 +13,10 @@ const tracer = new jaeger.Tracer('my-server-2', reporter, sampler, {
   }
 })
 // eslint-disable-next-line
-const instrument = new Instrument({ tracers: [tracer] })
+const instrument = new Instrument({
+  tracers: [tracer],
+  httpTimings: true
+})
 
 const express = require('express')
 const request = require('request-promise-native')

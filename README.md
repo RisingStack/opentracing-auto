@@ -46,6 +46,8 @@ Instrument modules.
 
 - `tracers`: Array of OpenTracing compatible tracers
   - **required**
+- `httpTimings`: Adds HTTP timings (DNS lookup, Connect, TLS, Time to first byte, Content transfer)
+  - *default: false*
 
 ### instrument.unpatch()
 
@@ -78,6 +80,12 @@ open http://localhost:16686
 ```
 
 ![Jaeger Node.js tracing](https://user-images.githubusercontent.com/1764512/26843812-c3198758-4af1-11e7-8aa3-1da55d9e58b6.png)
+
+## HTTP timings
+
+You can enable it with the `httpTimings: true`
+
+![HTTP timings](https://user-images.githubusercontent.com/1764512/30158154-92be25ca-93c4-11e7-9679-0d71ea3b8230.png)
 
 ## Debug
 

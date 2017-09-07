@@ -12,7 +12,8 @@ const instrumentations = require('./instrumentation')
 */
 class Instrument {
   constructor ({
-    tracers = []
+    tracers = [],
+    httpTimings = false
   }) {
     if (!_.isArray(tracers)) {
       throw new Error('tracers is required')
@@ -20,6 +21,9 @@ class Instrument {
 
     this._tracers = tracers
     this._instrumented = new Map()
+    this._options = {
+      httpTimings
+    }
 
     this._tracers = this._tracers.map((tracer) => {
       tracer.__clsNamespace = Symbol('tracer')
@@ -63,7 +67,7 @@ class Instrument {
             semver.satisfies(moduleVersion, supportedVersion))
         })
         .forEach((instrumentation) => {
-          instrumentation.patch(moduleExports, this._tracers)
+          instrumentation.patch(moduleExports, this._tracers, this._options)
           this._instrumented.set(moduleExports, instrumentation)
 
           debug(`Instrumentation "${instrumentation.name}" applied on module "${moduleName}"`, {
