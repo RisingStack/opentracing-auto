@@ -1,3 +1,12 @@
+<a name="1.4.1"></a>
+### 1.4.1 (2017-09-07)
+
+
+#### Bug Fixes
+
+* **instrumentation:** collect timings for non flowing response streams ([04be8fe7](git+https://github.com/RisingStack/opentracing-auto.git/commit/04be8fe7))
+
+
 <a name="1.4.0"></a>
 ## 1.4.0 (2017-09-07)
 
