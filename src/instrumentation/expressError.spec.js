@@ -50,10 +50,13 @@ describe('instrumentation: expressError', () => {
         .expect(500)
         .end()
 
-      expect(cls.startChildSpan).to.be.calledWith(tracer, instrumentation.OPERATION_NAME)
+      expect(cls.startChildSpan).to.be.calledWith(tracer, instrumentation.OPERATION_NAME, {
+        tags: {
+          [Tags.ERROR]: true
+        }
+      })
 
       expect(mockRootSpan.setTag).to.be.calledWith(Tags.ERROR, true)
-      expect(mockChildSpan.setTag).to.be.calledWith(Tags.ERROR, true)
       expect(mockChildSpan.log).to.be.calledWith({
         event: 'error',
         'error.object': err,
@@ -79,10 +82,13 @@ describe('instrumentation: expressError', () => {
         .expect(500)
         .end()
 
-      expect(cls.startChildSpan).to.be.calledWith(tracer, instrumentation.OPERATION_NAME)
+      expect(cls.startChildSpan).to.be.calledWith(tracer, instrumentation.OPERATION_NAME, {
+        tags: {
+          [Tags.ERROR]: true
+        }
+      })
 
       expect(mockRootSpan.setTag).to.be.calledWith(Tags.ERROR, true)
-      expect(mockChildSpan.setTag).to.be.calledWith(Tags.ERROR, true)
       expect(mockChildSpan.log).to.be.calledWith({
         event: 'error',
         'error.object': err,

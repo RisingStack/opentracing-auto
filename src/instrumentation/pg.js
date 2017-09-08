@@ -23,15 +23,18 @@ function patch (pg, tracers) {
       }
 
       const operationName = `${OPERATION_NAME}_query`
-      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, operationName))
+      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, operationName, {
+        tags: {
+          [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_CLIENT,
+          [Tags.DB_TYPE]: DB_TYPE,
+          [Tags.DB_STATEMENT]: statement
+        }
+      }))
 
       debug(`Operation started ${operationName}`, {
         [Tags.DB_TYPE]: DB_TYPE,
         [Tags.DB_STATEMENT]: statement
       })
-
-      spans.forEach((span) => span.setTag(Tags.DB_TYPE, DB_TYPE))
-      spans.forEach((span) => span.setTag(Tags.DB_STATEMENT, statement))
 
       pgQuery.callback = (err, res) => {
         if (err) {

@@ -43,10 +43,13 @@ describe('instrumentation: httpClient', () => {
 
       await request('http://risingstack.com')
 
-      expect(cls.startChildSpan).to.be.calledWith(tracer, instrumentation.OPERATION_NAME)
-      expect(mockChildSpan.setTag).to.have.calledWith(Tags.HTTP_URL, 'http://risingstack.com:80')
-      expect(mockChildSpan.setTag).to.have.calledWith(Tags.HTTP_METHOD, 'GET')
-      expect(mockChildSpan.setTag).to.have.calledWith(Tags.SPAN_KIND_RPC_CLIENT, true)
+      expect(cls.startChildSpan).to.be.calledWith(tracer, instrumentation.OPERATION_NAME, {
+        tags: {
+          [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_CLIENT,
+          [Tags.HTTP_URL]: 'http://risingstack.com:80',
+          [Tags.HTTP_METHOD]: 'GET'
+        }
+      })
       expect(mockChildSpan.setTag).to.have.calledWith(Tags.HTTP_STATUS_CODE, 200)
       expect(mockChildSpan.finish).to.have.callCount(1)
     })
@@ -68,10 +71,13 @@ describe('instrumentation: httpClient', () => {
 
       await request('https://risingstack.com')
 
-      expect(cls.startChildSpan).to.be.calledWith(tracer, instrumentation.OPERATION_NAME)
-      expect(mockChildSpan.setTag).to.have.calledWith(Tags.HTTP_URL, 'https://risingstack.com:443')
-      expect(mockChildSpan.setTag).to.have.calledWith(Tags.HTTP_METHOD, 'GET')
-      expect(mockChildSpan.setTag).to.have.calledWith(Tags.SPAN_KIND_RPC_CLIENT, true)
+      expect(cls.startChildSpan).to.be.calledWith(tracer, instrumentation.OPERATION_NAME, {
+        tags: {
+          [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_CLIENT,
+          [Tags.HTTP_URL]: 'https://risingstack.com:443',
+          [Tags.HTTP_METHOD]: 'GET'
+        }
+      })
       expect(mockChildSpan.setTag).to.have.calledWith(Tags.HTTP_STATUS_CODE, 200)
       expect(mockChildSpan.finish).to.have.callCount(1)
     })

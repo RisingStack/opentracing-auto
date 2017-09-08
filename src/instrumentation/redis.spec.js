@@ -35,9 +35,13 @@ describe('instrumentation: redis', () => {
     it('should start and finish span', (done) => {
       client.set('string key', 'string val', (err, replies) => {
         expect(replies).to.be.eql('OK')
-        expect(cls.startChildSpan).to.be.calledWith(tracer, 'redis_set')
-        expect(mockChildSpan.setTag).to.have.calledWith(Tags.DB_TYPE, 'redis')
-        expect(mockChildSpan.setTag).to.have.calledWith(Tags.DB_STATEMENT, 'set string key,string val')
+        expect(cls.startChildSpan).to.be.calledWith(tracer, 'redis_set', {
+          tags: {
+            [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_CLIENT,
+            [Tags.DB_TYPE]: instrumentation.DB_TYPE,
+            [Tags.DB_STATEMENT]: 'set string key,string val'
+          }
+        })
 
         // FIXME: is this an issue?
         // expect(mockChildSpan.finish).to.have.callCount(1)

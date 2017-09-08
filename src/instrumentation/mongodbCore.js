@@ -12,16 +12,19 @@ function nextWrapFactory (tracers) {
   return function nextWrap (next) {
     return function nextTrace (cb) {
       const operationName = `${OPERATION_NAME}_cursor`
-      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, operationName))
       const statement = JSON.stringify(this.cmd)
+      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, operationName, {
+        tags: {
+          [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_CLIENT,
+          [Tags.DB_TYPE]: DB_TYPE,
+          [Tags.DB_STATEMENT]: statement
+        }
+      }))
 
       debug(`Operation started ${OPERATION_NAME}`, {
         [Tags.DB_TYPE]: DB_TYPE,
         [Tags.DB_STATEMENT]: statement
       })
-
-      spans.forEach((span) => span.setTag(Tags.DB_TYPE, DB_TYPE))
-      spans.forEach((span) => span.setTag(Tags.DB_STATEMENT, statement))
 
       return next.call(this, wrapCallback(tracers, spans, operationName, cb))
     }
@@ -61,18 +64,21 @@ function wrapFactory (tracers, command) {
   return function (original) {
     return function mongoOperationTrace (ns, ops, options, callback) {
       const operationName = `${OPERATION_NAME}_${command}`
-      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, operationName))
       const statement = JSON.stringify(ops)
+      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, operationName, {
+        tags: {
+          [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_CLIENT,
+          [Tags.DB_TYPE]: DB_TYPE,
+          [Tags.DB_STATEMENT]: statement,
+          [Tags.DB_INSTANCE]: ns
+        }
+      }))
 
       debug(`Operation started ${operationName}`, {
         [Tags.DB_TYPE]: DB_TYPE,
         [Tags.DB_STATEMENT]: statement,
         [Tags.DB_INSTANCE]: ns
       })
-
-      spans.forEach((span) => span.setTag(Tags.DB_TYPE, DB_TYPE))
-      spans.forEach((span) => span.setTag(Tags.DB_STATEMENT, statement))
-      spans.forEach((span) => span.setTag(Tags.DB_INSTANCE, ns))
 
       if (typeof options === 'function') {
         return original.call(this, ns, ops, wrapCallback(tracers, spans, operationName, options))

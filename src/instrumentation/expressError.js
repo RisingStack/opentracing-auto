@@ -2,7 +2,7 @@
 
 const debug = require('debug')('opentracing-auto:instrumentation:expressError')
 const shimmer = require('shimmer')
-const opentracing = require('opentracing')
+const { Tags } = require('opentracing')
 const cls = require('../cls')
 
 const OPERATION_NAME = 'express_error_handler'
@@ -32,11 +32,15 @@ function patch (express, tracers) {
           const rootSpans = tracers.map((tracer) => cls.getRootSpan(tracer))
 
           if (rootSpans.length) {
-            rootSpans.forEach((rootSpan) => rootSpan.setTag(opentracing.Tags.ERROR, true))
+            rootSpans.forEach((rootSpan) => rootSpan.setTag(Tags.ERROR, true))
           }
 
           // error span
-          const spans = tracers.map((tracer) => cls.startChildSpan(tracer, OPERATION_NAME))
+          const spans = tracers.map((tracer) => cls.startChildSpan(tracer, OPERATION_NAME, {
+            tags: {
+              [Tags.ERROR]: true
+            }
+          }))
 
           debug(`Operation started ${OPERATION_NAME}`)
 
@@ -46,7 +50,6 @@ function patch (express, tracers) {
             message: err.message,
             stack: err.stack
           }))
-          spans.forEach((span) => span.setTag(opentracing.Tags.ERROR, true))
 
           debug(`Operation error captured ${OPERATION_NAME}`, {
             reason: 'Error handler'

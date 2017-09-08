@@ -2,7 +2,7 @@
 
 const request = require('super-request')
 const { expect } = require('chai')
-const { Tracer, Tags } = require('opentracing')
+const { Tracer, Tags, SpanContext } = require('opentracing')
 const express = require('express')
 const cls = require('../cls')
 const instrumentation = require('./express')
@@ -39,11 +39,18 @@ describe('instrumentation: express', () => {
         .expect(200)
         .end()
 
-      expect(cls.startRootSpan).to.be.calledWith(tracer, instrumentation.OPERATION_NAME)
+      // FIXME: should be undefined, but the dummy tracer returns an empty span context
+      const childOf = new SpanContext()
 
-      expect(mockSpan.setTag).to.be.calledWith(Tags.HTTP_URL, 'http://127.0.0.1/')
-      expect(mockSpan.setTag).to.be.calledWith(Tags.HTTP_METHOD, 'GET')
-      expect(mockSpan.setTag).to.be.calledWith(Tags.SPAN_KIND_RPC_SERVER, true)
+      expect(cls.startRootSpan).to.be.calledWith(tracer, instrumentation.OPERATION_NAME, {
+        childOf,
+        tags: {
+          [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER,
+          [Tags.HTTP_URL]: 'http://127.0.0.1/',
+          [Tags.HTTP_METHOD]: 'GET'
+        }
+      })
+
       expect(mockSpan.log).to.be.calledWith({ peerRemoteAddress: '::ffff:127.0.0.1' })
       expect(mockSpan.setTag).to.be.calledWith(instrumentation.TAG_REQUEST_PATH, '/')
       expect(mockSpan.setTag).to.be.calledWith(Tags.HTTP_STATUS_CODE, 200)
@@ -65,7 +72,12 @@ describe('instrumentation: express', () => {
         .end()
 
       expect(cls.startRootSpan).to.be.calledWith(tracer, instrumentation.OPERATION_NAME, {
-        childOf: parentSpan.context()
+        childOf: parentSpan.context(),
+        tags: {
+          [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER,
+          [Tags.HTTP_URL]: 'http://127.0.0.1/',
+          [Tags.HTTP_METHOD]: 'GET'
+        }
       })
     })
 

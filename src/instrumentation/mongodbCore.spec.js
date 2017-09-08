@@ -43,9 +43,14 @@ describe('instrumentation: mongodb-core', () => {
 
       expect(result).to.be.eql(site)
 
-      expect(cls.startChildSpan).to.be.calledWith(tracer, `${instrumentation.OPERATION_NAME}_insert`)
-      expect(mockChildSpan.setTag).to.have.calledWith(Tags.DB_TYPE, instrumentation.DB_TYPE)
-      expect(mockChildSpan.setTag).to.have.calledWith(Tags.DB_STATEMENT, JSON.stringify([site]))
+      expect(cls.startChildSpan).to.be.calledWith(tracer, `${instrumentation.OPERATION_NAME}_insert`, {
+        tags: {
+          [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_CLIENT,
+          [Tags.DB_TYPE]: instrumentation.DB_TYPE,
+          [Tags.DB_STATEMENT]: JSON.stringify([site]),
+          [Tags.DB_INSTANCE]: 'mydb.sites'
+        }
+      })
       expect(mockChildSpan.finish).to.have.callCount(1)
     })
 

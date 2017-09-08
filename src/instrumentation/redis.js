@@ -33,17 +33,20 @@ function patch (redis, tracers) {
         return
       }
 
-      const operationName = `${OPERATION_NAME}_${commandObj.command}`
-      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, operationName))
       const statement = `${commandObj.command} ${commandObj.args}`
+      const operationName = `${OPERATION_NAME}_${commandObj.command}`
+      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, operationName, {
+        tags: {
+          [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_CLIENT,
+          [Tags.DB_TYPE]: DB_TYPE,
+          [Tags.DB_STATEMENT]: statement
+        }
+      }))
 
       debug(`Operation started ${operationName}`, {
         [Tags.DB_TYPE]: DB_TYPE,
         [Tags.DB_STATEMENT]: statement
       })
-
-      spans.forEach((span) => span.setTag(Tags.DB_TYPE, DB_TYPE))
-      spans.forEach((span) => span.setTag(Tags.DB_STATEMENT, statement))
 
       const originalCallback = commandObj.callback
 
@@ -89,6 +92,7 @@ module.exports = {
   module: 'redis',
   supportedVersions: ['2.4'],
   OPERATION_NAME,
+  DB_TYPE,
   patch,
   unpatch
 }
