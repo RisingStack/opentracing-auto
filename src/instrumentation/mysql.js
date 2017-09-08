@@ -15,18 +15,22 @@ function patch (mysql, tracers) {
 
   function createQueryWrap (createQuery) {
     return function createQueryWrapped (sql, values, cb) {
-      const operationName = `${OPERATION_NAME}_query`
-      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, operationName))
       const query = createQuery.call(this, sql, values, cb)
       const statement = query.sql
+
+      const operationName = `${OPERATION_NAME}_query`
+      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, operationName, {
+        tags: {
+          [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_CLIENT,
+          [Tags.DB_TYPE]: DB_TYPE,
+          [Tags.DB_STATEMENT]: statement
+        }
+      }))
 
       debug(`Operation started ${OPERATION_NAME}`, {
         [Tags.DB_TYPE]: DB_TYPE,
         [Tags.DB_STATEMENT]: statement
       })
-
-      spans.forEach((span) => span.setTag(Tags.DB_TYPE, DB_TYPE))
-      spans.forEach((span) => span.setTag(Tags.DB_STATEMENT, statement))
 
       query.on('error', (err) => {
         spans.forEach((span) => span.log({

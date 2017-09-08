@@ -25,15 +25,18 @@ function patch (express, tracers) {
     const url = `${req.protocol}://${req.hostname}${req.originalUrl}`
     const parentSpanContexts = tracers.map((tracer) => tracer.extract(FORMAT_HTTP_HEADERS, req.headers))
     const spans = parentSpanContexts.map((parentSpanContext, key) =>
-      cls.startRootSpan(tracers[key], OPERATION_NAME, { childOf: parentSpanContext }))
+      cls.startRootSpan(tracers[key], OPERATION_NAME, {
+        childOf: parentSpanContext,
+        tags: {
+          [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER,
+          [Tags.HTTP_URL]: url,
+          [Tags.HTTP_METHOD]: req.method
+        }
+      }))
     debug(`Operation started ${OPERATION_NAME}`, {
       [Tags.HTTP_URL]: url,
       [Tags.HTTP_METHOD]: req.method
     })
-
-    spans.forEach((span) => span.setTag(Tags.HTTP_URL, url))
-    spans.forEach((span) => span.setTag(Tags.HTTP_METHOD, req.method))
-    spans.forEach((span) => span.setTag(Tags.SPAN_KIND_RPC_SERVER, true))
 
     if (req.connection.remoteAddress) {
       spans.forEach((span) => span.log({ peerRemoteAddress: req.connection.remoteAddress }))

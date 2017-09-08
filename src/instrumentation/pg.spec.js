@@ -41,9 +41,13 @@ describe('instrumentation: pg', () => {
 
       expect(rows).to.be.eql([{ result: 1 }])
 
-      expect(cls.startChildSpan).to.be.calledWith(tracer, `${instrumentation.OPERATION_NAME}_query`)
-      expect(mockChildSpan.setTag).to.have.calledWith(Tags.DB_TYPE, instrumentation.DB_TYPE)
-      expect(mockChildSpan.setTag).to.have.calledWith(Tags.DB_STATEMENT, query)
+      expect(cls.startChildSpan).to.be.calledWith(tracer, `${instrumentation.OPERATION_NAME}_query`, {
+        tags: {
+          [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_CLIENT,
+          [Tags.DB_TYPE]: instrumentation.DB_TYPE,
+          [Tags.DB_STATEMENT]: query
+        }
+      })
 
       // FIXME: only with ../instrument.js tests together
       // expect(mockChildSpan.finish).to.have.callCount(1)

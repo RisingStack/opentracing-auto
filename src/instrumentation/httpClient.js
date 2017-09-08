@@ -98,9 +98,16 @@ function patch (http, tracers, { httpTimings } = {}) {
         return request.apply(this, [options, callback])
       }
 
-      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, OPERATION_NAME))
       const uri = extractUrl(options)
       const method = options.method || 'GET'
+      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, OPERATION_NAME, {
+        tags: {
+          [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_CLIENT,
+          [Tags.HTTP_URL]: uri,
+          [Tags.HTTP_METHOD]: method
+        }
+      }))
+
       const timings = {
         begin: undefined,
         dnsLookup: undefined,
@@ -120,10 +127,6 @@ function patch (http, tracers, { httpTimings } = {}) {
       options.headers = options.headers || {}
 
       tracers.forEach((tracer, key) => tracer.inject(spans[key], FORMAT_HTTP_HEADERS, options.headers))
-
-      spans.forEach((span) => span.setTag(Tags.HTTP_URL, uri))
-      spans.forEach((span) => span.setTag(Tags.HTTP_METHOD, method))
-      spans.forEach((span) => span.setTag(Tags.SPAN_KIND_RPC_CLIENT, true))
 
       timings.begin = Date.now()
 
