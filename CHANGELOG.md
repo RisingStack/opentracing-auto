@@ -1,3 +1,12 @@
+<a name="1.4.2"></a>
+### 1.4.2 (2017-09-08)
+
+
+#### Bug Fixes
+
+* **instrumentation:** follow semantic conventions ([176d7254](git+https://github.com/RisingStack/opentracing-auto.git/commit/176d7254))
+
+
 <a name="1.4.1"></a>
 ### 1.4.1 (2017-09-07)
 
