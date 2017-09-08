@@ -44,10 +44,10 @@ function getRootSpan (tracer) {
 * @function startRootSpan
 * @param {Tracer} tracer
 * @param {String} operationName
-* @param {SpanContext} [parentSpanContext]
+* @param {Object} [options]
 * @return {Span}
 */
-function startRootSpan (tracer, operationName, parentSpanContext) {
+function startRootSpan (tracer, operationName, options) {
   if (!tracer) {
     throw new Error('tracer is required')
   }
@@ -55,9 +55,7 @@ function startRootSpan (tracer, operationName, parentSpanContext) {
     throw new Error('operationName is required')
   }
 
-  const span = tracer.startSpan(operationName, {
-    childOf: parentSpanContext
-  })
+  const span = tracer.startSpan(operationName, options)
 
   cls.assign(tracer, {
     currentSpan: span
@@ -72,9 +70,10 @@ function startRootSpan (tracer, operationName, parentSpanContext) {
 * @function startChildSpan
 * @param {Tracer} tracer
 * @param {String} operationName
+* @param {Object} [options]
 * @return {Span}
 */
-function startChildSpan (tracer, operationName) {
+function startChildSpan (tracer, operationName, options) {
   if (!tracer) {
     throw new Error('tracer is required')
   }
@@ -85,9 +84,9 @@ function startChildSpan (tracer, operationName) {
   const parentSpan = getRootSpan(tracer)
   const parentSpanContext = parentSpan ? parentSpan.context() : undefined
 
-  const span = tracer.startSpan(operationName, {
+  const span = tracer.startSpan(operationName, Object.assign({}, options, {
     childOf: parentSpanContext
-  })
+  }))
 
   debug('Child span started')
 

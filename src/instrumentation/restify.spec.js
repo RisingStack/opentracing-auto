@@ -64,7 +64,9 @@ describe('instrumentation: restify', () => {
         .expect(200)
         .end()
 
-      expect(cls.startRootSpan).to.be.calledWith(tracer, instrumentation.OPERATION_NAME, parentSpan.context())
+      expect(cls.startRootSpan).to.be.calledWith(tracer, instrumentation.OPERATION_NAME, {
+        childOf: parentSpan.context()
+      })
     })
 
     it('should set error tag for > 3xx status codes', async () => {

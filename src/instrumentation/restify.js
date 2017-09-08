@@ -21,7 +21,7 @@ function patch (restify, tracers) {
     // start
     const parentSpanContexts = tracers.map((tracer) => tracer.extract(FORMAT_HTTP_HEADERS, req.headers))
     const spans = parentSpanContexts.map((parentSpanContext, key) =>
-      cls.startRootSpan(tracers[key], OPERATION_NAME, parentSpanContext))
+      cls.startRootSpan(tracers[key], OPERATION_NAME, { childOf: parentSpanContext }))
 
     debug(`Operation started ${OPERATION_NAME}`, {
       [Tags.HTTP_URL]: req.url,

@@ -1,6 +1,7 @@
 'use strict'
 
 const { expect } = require('chai')
+const { Tags } = require('opentracing')
 const _ = require('lodash')
 const cls = require('./cls')
 
@@ -45,9 +46,7 @@ describe('cls', () => {
     it('should start root span', () => {
       const span = cls.startRootSpan(tracer, 'http_request')
 
-      expect(tracer.startSpan).to.be.calledWithExactly('http_request', {
-        childOf: undefined
-      })
+      expect(tracer.startSpan).to.be.calledWithExactly('http_request', undefined)
 
       expect(cls.getContext(tracer)).to.be.eql({
         [tracer.__clsNamespace]: {
@@ -59,19 +58,11 @@ describe('cls', () => {
     })
 
     it('should start root span that has a parent', () => {
-      const parentSpanContext = { isValid: true }
-      cls.startRootSpan(tracer, 'http_request', parentSpanContext)
+      const parentSpanContext = {}
+      cls.startRootSpan(tracer, 'http_request', { childOf: parentSpanContext })
 
       expect(tracer.startSpan).to.be.calledWithExactly('http_request', {
         childOf: parentSpanContext
-      })
-    })
-
-    it('should skip invalid parent', () => {
-      cls.startRootSpan(tracer, 'http_request')
-
-      expect(tracer.startSpan).to.be.calledWithExactly('http_request', {
-        childOf: undefined
       })
     })
   })
@@ -88,7 +79,7 @@ describe('cls', () => {
     })
 
     it('should start child span that has a parent', () => {
-      const parentSpanContext = { isValid: true }
+      const parentSpanContext = {}
       cls.setContext({
         [tracer.__clsNamespace]: {
           currentSpan: {
@@ -101,6 +92,19 @@ describe('cls', () => {
       expect(tracer.startSpan).to.be.calledWithExactly('http_request', {
         childOf: parentSpanContext
       })
+    })
+
+    it('should start child span with options', () => {
+      const span = cls.startChildSpan(tracer, 'http_request', {
+        tags: { [Tags.HTTP_METHOD]: 'GET' }
+      })
+
+      expect(tracer.startSpan).to.be.calledWithExactly('http_request', {
+        childOf: undefined,
+        tags: { [Tags.HTTP_METHOD]: 'GET' }
+      })
+
+      expect(span).to.be.equal('mock-span')
     })
 
     it('should skip invalid parent', () => {
