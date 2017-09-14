@@ -90,7 +90,7 @@ function unpatch (redis) {
 module.exports = {
   name: 'redis',
   module: 'redis',
-  supportedVersions: ['2.4'],
+  supportedVersions: ['2.8'],
   OPERATION_NAME,
   DB_TYPE,
   patch,
