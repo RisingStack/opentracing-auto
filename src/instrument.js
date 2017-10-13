@@ -45,7 +45,7 @@ class Instrument {
 
     // Instrunent modules: hook require
     hook(instrumentedModules, (moduleExports, moduleName, moduleBaseDir) => {
-      this.hookModule(moduleExports, moduleName, moduleBaseDir)
+      return this.hookModule(moduleExports, moduleName, moduleBaseDir)
     })
 
     debug('Patched')
