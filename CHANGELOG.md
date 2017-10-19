@@ -1,3 +1,12 @@
+<a name="1.5.0"></a>
+## 1.5.0 (2017-10-19)
+
+
+#### Features
+
+* **instrumentation:** Instrument#hookModule to manually hook module (#8) ([5d344139](git+https://github.com/RisingStack/opentracing-auto.git/commit/5d344139))
+
+
 <a name="1.4.4"></a>
 ### 1.4.4 (2017-09-29)
 
