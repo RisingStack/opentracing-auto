@@ -38,6 +38,37 @@ const express = require('express')
 // ...
 ```
 
+This package depends
+on [require-in-the-middle](https://github.com/opbeat/require-in-the-middle)
+and [shimmer](https://www.npmjs.com/package/shimmer) to monkeypatch tracing
+information onto the modules [listed below](#Instrumentations). Therefore it is
+crucial that you require() supported modules after creating the tracing
+instrument.
+
+If you are using node 8.5+'s experimental module support, you will need to
+manually hook supported modules:
+
+```
+import Instrument from '@risingstack/opentracing-auto';
+import jaeger from 'jaeger-client';
+import UDPSender from 'jaeger-client/dist/src/reporters/udp_sender';
+import http from 'http';
+
+const instrument = new Instrument({
+  tracers: [
+    new jaeger.Tracer(
+      'my-service-name',
+      new jaeger.RemoteReporter(new UDPSender.default({ host: 'my-jaeger-host' })),
+      new jaeger.RateLimitingSampler(1),
+      {}
+    ),
+  ],
+});
+
+instrument.hookModule(http, 'http');
+
+```
+
 ## API
 
 ### new Instrument({ tracers: [tracer1, tracer2] })

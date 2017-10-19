@@ -45,6 +45,21 @@ class Instrument {
 
     // Instrunent modules: hook require
     hook(instrumentedModules, (moduleExports, moduleName, moduleBaseDir) => {
+      return this.hookModule(moduleExports, moduleName, moduleBaseDir)
+    })
+
+    debug('Patched')
+  }
+
+  /**
+  * Manually hook a module, useful when require-in-the-middle does not work,
+  * such as when you are using ESM.
+  * @method hookModule
+  * @param {Object} module
+  * @param {string} moduleName
+  * @param {string} moduleBaseDir
+  */
+  hookModule(moduleExports, moduleName, moduleBaseDir) {
       let moduleVersion
 
       // Look for version in package.json
@@ -77,9 +92,6 @@ class Instrument {
         })
 
       return moduleExports
-    })
-
-    debug('Patched')
   }
 
   /**
