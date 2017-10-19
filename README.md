@@ -48,7 +48,7 @@ instrument.
 If you are using node 8.5+'s experimental module support, you will need to
 manually hook supported modules:
 
-```
+```js
 import Instrument from '@risingstack/opentracing-auto';
 import jaeger from 'jaeger-client';
 import UDPSender from 'jaeger-client/dist/src/reporters/udp_sender';
@@ -66,7 +66,6 @@ const instrument = new Instrument({
 });
 
 instrument.hookModule(http, 'http');
-
 ```
 
 ## API
