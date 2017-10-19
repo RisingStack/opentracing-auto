@@ -34,7 +34,7 @@ describe('instrumentation: express', () => {
       const app = express()
       app.get('/', (req, res) => res.send('ok'))
 
-      await request(app)
+      const result = await request(app)
         .get('/')
         .expect(200)
         .end()
@@ -46,7 +46,7 @@ describe('instrumentation: express', () => {
         childOf,
         tags: {
           [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER,
-          [Tags.HTTP_URL]: 'http://127.0.0.1/',
+          [Tags.HTTP_URL]: `http://127.0.0.1:${result.request.uri.port}/`,
           [Tags.HTTP_METHOD]: 'GET'
         }
       })
@@ -65,7 +65,7 @@ describe('instrumentation: express', () => {
       const app = express()
       app.get('/', (req, res) => res.send('ok'))
 
-      await request(app)
+      const result = await request(app)
         .get('/')
         .headers(headers)
         .expect(200)
@@ -75,7 +75,7 @@ describe('instrumentation: express', () => {
         childOf: parentSpan.context(),
         tags: {
           [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER,
-          [Tags.HTTP_URL]: 'http://127.0.0.1/',
+          [Tags.HTTP_URL]: `http://127.0.0.1:${result.request.uri.port}/`,
           [Tags.HTTP_METHOD]: 'GET'
         }
       })

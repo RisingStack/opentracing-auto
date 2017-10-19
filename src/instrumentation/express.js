@@ -22,7 +22,7 @@ function patch (express, tracers) {
 
   function middleware (req, res, next) {
     // start
-    const url = `${req.protocol}://${req.hostname}${req.originalUrl}`
+    const url = `${req.protocol}://${req.get('host')}${req.originalUrl}`
     const parentSpanContexts = tracers.map((tracer) => tracer.extract(FORMAT_HTTP_HEADERS, req.headers))
     const spans = parentSpanContexts.map((parentSpanContext, key) =>
       cls.startRootSpan(tracers[key], OPERATION_NAME, {
