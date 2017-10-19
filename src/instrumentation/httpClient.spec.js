@@ -38,15 +38,18 @@ describe('instrumentation: httpClient', () => {
 
     it('should start and finish span with http', async () => {
       nock('http://risingstack.com')
-        .get('/')
+        .get('/foo')
         .reply(200)
 
-      await request('http://risingstack.com')
+      await request({
+        uri: 'http://risingstack.com/foo',
+        query: { token: 'secret' }
+      })
 
       expect(cls.startChildSpan).to.be.calledWith(tracer, instrumentation.OPERATION_NAME, {
         tags: {
           [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_CLIENT,
-          [Tags.HTTP_URL]: 'http://risingstack.com:80',
+          [Tags.HTTP_URL]: 'http://risingstack.com:80/foo',
           [Tags.HTTP_METHOD]: 'GET'
         }
       })
@@ -74,7 +77,7 @@ describe('instrumentation: httpClient', () => {
       expect(cls.startChildSpan).to.be.calledWith(tracer, instrumentation.OPERATION_NAME, {
         tags: {
           [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_CLIENT,
-          [Tags.HTTP_URL]: 'https://risingstack.com:443',
+          [Tags.HTTP_URL]: 'https://risingstack.com:443/',
           [Tags.HTTP_METHOD]: 'GET'
         }
       })

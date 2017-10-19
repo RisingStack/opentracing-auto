@@ -25,7 +25,7 @@ function extractUrl (options) {
     protocol: options.protocol || agent.protocol,
     hostname: options.hostname || options.host || 'localhost',
     port: options.port,
-    path: options.path || options.pathName || '/'
+    pathname: options.path || options.pathName || '/'
   })
 }
 
