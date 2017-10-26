@@ -1,3 +1,12 @@
+<a name="1.5.2"></a>
+### 1.5.2 (2017-10-26)
+
+
+#### Features
+
+* **cls:** replace asynctx to cls-hooked ([e94ac9f6](git+https://github.com/RisingStack/opentracing-auto.git/commit/e94ac9f6))
+
+
 <a name="1.5.1"></a>
 ### 1.5.1 (2017-10-19)
 
