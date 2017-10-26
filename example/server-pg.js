@@ -5,7 +5,7 @@ const UDPSender = require('jaeger-client/dist/src/reporters/udp_sender').default
 // eslint-disable-next-line
 const Instrument = require('../src')
 
-const sampler = new jaeger.RateLimitingSampler(1)
+const sampler = new jaeger.ConstSampler(true)
 const reporter = new jaeger.RemoteReporter(new UDPSender())
 const tracer = new jaeger.Tracer('my-server-pg', reporter, sampler, {
   tags: {
