@@ -5,6 +5,7 @@ const debug = require('debug')('opentracing-auto:instrument')
 const semver = require('semver')
 const _ = require('lodash')
 const hook = require('require-in-the-middle')
+const uuidv4 = require('uuid/v4')
 const instrumentations = require('./instrumentation')
 
 /**
@@ -26,7 +27,7 @@ class Instrument {
     }
 
     this._tracers = this._tracers.map((tracer) => {
-      tracer.__clsNamespace = Symbol('tracer')
+      tracer.__clsNamespace = uuidv4()
 
       return tracer
     })

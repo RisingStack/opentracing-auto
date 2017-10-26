@@ -5,7 +5,7 @@ const UDPSender = require('jaeger-client/dist/src/reporters/udp_sender').default
 // eslint-disable-next-line
 const Instrument = require('../src')
 
-const sampler = new jaeger.RateLimitingSampler(1)
+const sampler = new jaeger.ConstSampler(true)
 const reporter = new jaeger.RemoteReporter(new UDPSender())
 const tracer = new jaeger.Tracer('my-server-2', reporter, sampler, {
   tags: {
@@ -42,7 +42,11 @@ app.get('/site/:id', async (req, res, next) => {
 })
 
 app.use((err, req, res, next) => {
-  next(err)
+  res.statusCode = 500
+  res.json({
+    message: err.message
+  })
+  next()
 })
 
 app.listen(port, () => {

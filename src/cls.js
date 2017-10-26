@@ -1,29 +1,9 @@
 'use strict'
 
 const debug = require('debug')('opentracing-auto:cls')
-const { ContinuationLocalStorage } = require('asyncctx')
-const _ = require('lodash')
+const { createNamespace } = require('cls-hooked')
 
-const cls = new ContinuationLocalStorage()
-const DEFAULT_CONTEXT = {}
-
-cls.setRootContext(_.clone(DEFAULT_CONTEXT))
-
-/**
-* @function assign
-* @param {Tracer} tracer
-* @param {SpanContext} spanContext
-*/
-function assign (tracer, spanContext) {
-  const currentContext = cls.getContext() || {}
-  const currentTracerContext = currentContext[tracer.__clsNamespace] || {}
-  const newTracerContext = Object.assign(currentTracerContext, spanContext)
-  const newContext = Object.assign(currentContext, {
-    [tracer.__clsNamespace]: newTracerContext
-  })
-
-  cls.setContext(newContext)
-}
+const session = createNamespace('opentracing-auto')
 
 /**
 * @function getRootSpan
@@ -35,9 +15,9 @@ function getRootSpan (tracer) {
     throw new Error('tracer is required')
   }
 
-  const context = cls.getContext() || cls.getRootContext() || {}
-  const tracerContext = context[tracer.__clsNamespace] || {}
-  return tracerContext.currentSpan
+  const rootSpan = getContext(tracer)
+
+  return rootSpan && rootSpan.context ? rootSpan : undefined
 }
 
 /**
@@ -55,13 +35,15 @@ function startRootSpan (tracer, operationName, options) {
     throw new Error('operationName is required')
   }
 
-  const span = tracer.startSpan(operationName, options)
+  let span = getRootSpan(tracer)
 
-  cls.assign(tracer, {
-    currentSpan: span
-  })
-
-  debug('Root span started')
+  if (span) {
+    debug('Root span finded')
+  } else {
+    span = tracer.startSpan(operationName, options)
+    setContext(tracer, span)
+    debug('Root span started')
+  }
 
   return span
 }
@@ -81,11 +63,11 @@ function startChildSpan (tracer, operationName, options) {
     throw new Error('operationName is required')
   }
 
-  const parentSpan = getRootSpan(tracer)
-  const parentSpanContext = parentSpan ? parentSpan.context() : undefined
+  const rootSpan = getRootSpan(tracer)
+  const rootSpanContext = rootSpan ? rootSpan.context() : undefined
 
   const span = tracer.startSpan(operationName, Object.assign({}, options, {
-    childOf: parentSpanContext
+    childOf: rootSpanContext
   }))
 
   debug('Child span started')
@@ -93,10 +75,19 @@ function startChildSpan (tracer, operationName, options) {
   return span
 }
 
-module.exports = Object.assign(cls, {
-  DEFAULT_CONTEXT,
-  assign,
+function setContext (tracer, rootSpan) {
+  return session.set(tracer.__clsNamespace, rootSpan)
+}
+
+function getContext (tracer) {
+  return session.get(tracer.__clsNamespace)
+}
+
+
+module.exports = Object.assign(session, {
   getRootSpan,
   startRootSpan,
-  startChildSpan
+  startChildSpan,
+  setContext,
+  getContext
 })

@@ -5,7 +5,7 @@ const UDPSender = require('jaeger-client/dist/src/reporters/udp_sender').default
 // eslint-disable-next-line
 const Instrument = require('../src')
 
-const sampler = new jaeger.RateLimitingSampler(1)
+const sampler = new jaeger.ConstSampler(true)
 const reporter = new jaeger.RemoteReporter(new UDPSender())
 const tracer = new jaeger.Tracer('my-server-1', reporter, sampler, {
   tags: {
@@ -22,31 +22,31 @@ const instrument = new Instrument({
 const http = require('http')
 // eslint-disable-next-line
 const express = require('express')
+// eslint-disable-next-line
+const request = require('request-promise-native')
 
 const port = 3000
 
 const app = express()
 
-app.get('/', (req, res, next) => {
-  http
-    .get('http://localhost:3001/site/risingstack', (getRes) => {
-      if (getRes.statusCode > 399) {
-        res.statusCode = getRes.statusCode
-        res.json({ status: 'upstream error' })
-        return
-      }
-
-      res.on('end', () => {
-        res.send('Hello World!')
-      })
-    })
-    .on('error', (err) => {
-      next(err)
-    })
+app.get('/', async (req, res, next) => {
+  try {
+    await request('http://localhost:3001/site/risingstack')
+  } catch (err) {
+    next(err)
+    return
+  }
+  res.json({
+    status: 'ok'
+  })
 })
 
 app.use((err, req, res, next) => {
-  next(err)
+  res.statusCode = 500
+  res.json({
+    message: err.message
+  })
+  next()
 })
 
 app.listen(port, () => {
