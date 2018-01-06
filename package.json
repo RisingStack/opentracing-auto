@@ -47,6 +47,7 @@
     "express": "4.16.2",
     "jaeger-client": "3.5.3",
     "knex": "0.13.0",
+    "koa": "^1.4.1",
     "mocha": "3.5.3",
     "mongodb-core": "2.1.17",
     "monk": "6.0.5",

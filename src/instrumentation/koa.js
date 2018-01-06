@@ -48,7 +48,7 @@ function patch (koa, tracers) {
       yield next
 
       // end
-
+      spans.forEach((span) => span.setTag(TAG_REQUEST_PATH, self.path))
       spans.forEach((span) => span.setTag(Tags.HTTP_STATUS_CODE, self.status))
 
       if (self.status >= 400) {
