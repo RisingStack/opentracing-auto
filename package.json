@@ -28,6 +28,7 @@
   ],
   "dependencies": {
     "cls-hooked": "4.2.2",
+    "co": "^4.6.0",
     "debug": "3.1.0",
     "lodash": "4.17.4",
     "methods": "1.1.2",
