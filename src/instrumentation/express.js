@@ -71,6 +71,10 @@ function patch (express, tracers) {
           [Tags.HTTP_STATUS_CODE]: res.statusCode
         })
 
+        const headerOptions = {}
+        tracers.forEach((tracer, key) => tracer.inject(spans[key], FORMAT_HTTP_HEADERS, headerOptions))
+        res.set(headerOptions)
+
         return returned
       }
 
