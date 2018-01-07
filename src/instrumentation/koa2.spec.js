@@ -3,11 +3,11 @@
 const request = require('super-request')
 const { expect } = require('chai')
 const { Tracer, Tags, SpanContext } = require('opentracing')
-const koa = require('koa')
+const Koa = require('koa2')
 const cls = require('../cls')
 const instrumentation = require('./koa')
 
-describe('instrumentation: koa@1.x', () => {
+describe('instrumentation: koa@2.x', () => {
   let tracer
   let mockSpan
 
@@ -21,19 +21,19 @@ describe('instrumentation: koa@1.x', () => {
 
     this.sandbox.stub(cls, 'startRootSpan').callsFake(() => mockSpan)
 
-    instrumentation.patch(koa, [tracer])
+    instrumentation.patch(Koa, [tracer])
   })
 
   afterEach(() => {
-    instrumentation.unpatch(koa)
+    instrumentation.unpatch(Koa)
   })
 
   describe('#patch', () => {
     it('should create a span without parent', async () => {
       // test
-      const app = koa()
-      app.use(function * () {
-        this.body = 'ok'
+      const app = new Koa()
+      app.use((ctx) => {
+        ctx.body = 'ok'
       })
 
       const result = await request(app.callback())
@@ -64,9 +64,9 @@ describe('instrumentation: koa@1.x', () => {
       const parentSpan = tracer.startSpan('http_request')
       tracer.inject(parentSpan, headers)
 
-      const app = koa()
-      app.use(function * () {
-        this.body = 'ok'
+      const app = new Koa()
+      app.use((ctx) => {
+        ctx.body = 'ok'
       })
 
       const result = await request(app.callback())
@@ -86,10 +86,10 @@ describe('instrumentation: koa@1.x', () => {
     })
 
     it('should set error tag for > 3xx status codes', async () => {
-      const app = koa()
-      app.use(function * () {
-        this.status = 400
-        this.body = 'ok'
+      const app = new Koa()
+      app.use((ctx) => {
+        ctx.status = 400
+        ctx.body = 'ok'
       })
 
       await request(app.callback())

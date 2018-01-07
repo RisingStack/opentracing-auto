@@ -2,6 +2,7 @@
 
 const debug = require('debug')('opentracing-auto:instrumentation:koa')
 const co = require('co')
+const isClass = require('is-class')
 const { Tags, FORMAT_HTTP_HEADERS } = require('opentracing')
 const shimmer = require('shimmer')
 const cls = require('../cls')
@@ -15,13 +16,67 @@ function patch (koa, tracers) {
     return function applicationActionWrapped (...args) {
       if (!this._jaeger_trace_patched && !this._router) {
         this._jaeger_trace_patched = true
-        this.use(middleware)
+        if (isClass(koa)) {
+          this.use(koa2Middleware)
+        } else {
+          this.use(koa1Middleware)
+        }
       }
       return method.call(this, ...args)
     }
   }
 
-  function * middleware (next) {
+  async function koa2Middleware (ctx, next) {
+    return cls.runPromise(async () => {
+      // start
+      const url = `${ctx.protocol}://${ctx.host}${ctx.url}`
+      const parentSpanContexts = tracers.map((tracer) => tracer.extract(FORMAT_HTTP_HEADERS, ctx.headers))
+      const spans = parentSpanContexts.map((parentSpanContext, key) =>
+        cls.startRootSpan(tracers[key], OPERATION_NAME, {
+          childOf: parentSpanContext,
+          tags: {
+            [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER,
+            [Tags.HTTP_URL]: url,
+            [Tags.HTTP_METHOD]: ctx.method
+          }
+        }))
+      debug(`Operation started ${OPERATION_NAME}`, {
+        [Tags.HTTP_URL]: url,
+        [Tags.HTTP_METHOD]: ctx.method
+      })
+
+      if (ctx.request.socket.remoteAddress) {
+        spans.forEach((span) => span.log({ peerRemoteAddress: ctx.request.socket.remoteAddress }))
+      }
+
+      await next()
+
+      // end
+      spans.forEach((span) => span.setTag(TAG_REQUEST_PATH, ctx.path))
+      spans.forEach((span) => span.setTag(Tags.HTTP_STATUS_CODE, ctx.status))
+
+      if (ctx.status >= 400) {
+        spans.forEach((span) => span.setTag(Tags.ERROR, true))
+
+        debug(`Operation error captured ${OPERATION_NAME}`, {
+          reason: 'Bad status code',
+          statusCode: ctx.status
+        })
+      }
+
+      spans.forEach((span) => span.finish())
+
+      const headerOptions = {}
+      tracers.forEach((tracer, key) => tracer.inject(spans[key], FORMAT_HTTP_HEADERS, headerOptions))
+      ctx.set(headerOptions)
+
+      debug(`Operation finished ${OPERATION_NAME}`, {
+        [Tags.HTTP_STATUS_CODE]: ctx.status
+      })
+    })
+  }
+
+  function * koa1Middleware (next) {
     const self = this
     return cls.runPromise(co.wrap(function * () {
       // start
@@ -92,7 +147,7 @@ function unpatch (koa) {
 module.exports = {
   name: 'koa',
   module: 'koa',
-  supportedVersions: ['1.x'],
+  supportedVersions: ['1.x', '2.x'],
   TAG_REQUEST_PATH,
   OPERATION_NAME,
   patch,
