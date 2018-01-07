@@ -60,6 +60,7 @@
     "pg": "6.4.0",
     "redis": "2.8.0",
     "request": "2.83.0",
+    "request-promise": "^4.2.2",
     "request-promise-native": "1.0.5",
     "restify": "6.2.3",
     "sinon": "4.0.2",
