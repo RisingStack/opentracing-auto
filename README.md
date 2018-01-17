@@ -69,7 +69,8 @@ instrument.hookModule(http, 'http');
 ```
 
 ## Examples
-* [opentracing-demos]()
+* [example folder](https://github.com/shimohq/opentracing-auto/tree/master/example)
+* [opentracing-demos](https://github.com/luoyjx/opentracing-demos)
 
 ## API
 
