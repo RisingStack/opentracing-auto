@@ -6,15 +6,23 @@ const semver = require('semver')
 const _ = require('lodash')
 const hook = require('require-in-the-middle')
 const uuidv4 = require('uuid/v4')
-const instrumentations = require('./instrumentation')
+let instrumentations = require('./instrumentation')
 
 /**
 * @class Instrument
 */
 class Instrument {
+  /**
+   * constructor
+   * @params {Object} options
+   * @param {Array<Tracer>} options.tracers - tracers
+   * @param {Boolean} httpTimings - if enable httpTimings, defaults to false
+   * @param {Array<String>} enables - enable instruments
+   */
   constructor ({
     tracers = [],
-    httpTimings = false
+    httpTimings = false,
+    enables = []
   }) {
     if (!_.isArray(tracers)) {
       throw new Error('tracers is required')
@@ -22,9 +30,13 @@ class Instrument {
 
     this._tracers = tracers
     this._instrumented = new Map()
-    this._options = {
-      httpTimings
-    }
+    this._options = Object.assign(
+      {},
+      {
+        httpTimings,
+        enables
+      }
+    )
 
     this._tracers = this._tracers.map((tracer) => {
       tracer.__clsNamespace = uuidv4()
@@ -42,6 +54,11 @@ class Instrument {
   * @method patch
   */
   patch () {
+    // Use all if not specify
+    if (this._options.enables && this._options.enables.length) {
+      instrumentations = _.pick(instrumentations, this._options.enables)
+    }
+
     const instrumentedModules = _.uniq(instrumentations.map((instrumentation) => instrumentation.module))
 
     // Instrunent modules: hook require

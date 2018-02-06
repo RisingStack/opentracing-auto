@@ -1,3 +1,12 @@
+<a name="1.6.2"></a>
+### 1.6.2 (2018-02-06)
+
+
+#### Features
+
+* **instrumentation:** support configurate which instruments should enable
+
+
 <a name="1.5.2"></a>
 ### 1.5.2 (2017-10-26)
 
