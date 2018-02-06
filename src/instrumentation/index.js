@@ -8,6 +8,7 @@ const mysql = require('./mysql')
 const pg = require('./pg')
 const redis = require('./redis')
 const restify = require('./restify')
+const koa = require('./koa')
 
 module.exports = [
   express,
@@ -17,5 +18,6 @@ module.exports = [
   mysql,
   pg,
   redis,
-  restify
+  restify,
+  koa
 ]

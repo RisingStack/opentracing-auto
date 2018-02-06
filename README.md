@@ -19,12 +19,12 @@ Support multiple Tracers.
 ## Getting started
 
 ```sh
-npm install @risingstack/opentracing-auto
+npm install shimo-opentracing-auto
 ```
 
 ```js
 // must be in the first two lines of your application
-const Instrument = require('@risingstack/opentracing-auto')
+const Instrument = require('shimo-opentracing-auto')
 const { Tracer } = require('opentracing') // or any OpenTracing compatible tracer like jaeger-client
 const tracer1 = new Tracer()
 const tracer2 = new Tracer()
@@ -49,7 +49,7 @@ If you are using node 8.5+'s experimental module support, you will need to
 manually hook supported modules:
 
 ```js
-import Instrument from '@risingstack/opentracing-auto';
+import Instrument from 'shimo-opentracing-auto';
 import jaeger from 'jaeger-client';
 import UDPSender from 'jaeger-client/dist/src/reporters/udp_sender';
 import http from 'http';
@@ -67,6 +67,10 @@ const instrument = new Instrument({
 
 instrument.hookModule(http, 'http');
 ```
+
+## Examples
+* [example folder](https://github.com/shimohq/opentracing-auto/tree/master/example)
+* [opentracing-demos](https://github.com/luoyjx/opentracing-demos)
 
 ## API
 
@@ -86,6 +90,7 @@ Unpatch instrumentations
 ## Instrumentations
 
 - [http, https](https://nodejs.org/api/http.html)
+- [koa1, koa2](http://koajs.com/)
 - [express](https://expressjs.com/)
 - [restify](http://restify.com/)
 - [mongodb-core](https://www.npmjs.com/package/mongodb-core)
