@@ -9,13 +9,10 @@ const uuidv4 = require('uuid/v4')
 const instrumentations = require('./instrumentation')
 
 /**
-* @class Instrument
-*/
+ * @class Instrument
+ */
 class Instrument {
-  constructor ({
-    tracers = [],
-    httpTimings = false
-  }) {
+  constructor ({ tracers = [], httpTimings = false }) {
     if (!_.isArray(tracers)) {
       throw new Error('tracers is required')
     }
@@ -38,27 +35,26 @@ class Instrument {
   }
 
   /**
-  * Applies specified fn of instrumentations
-  * @method patch
-  */
+   * Applies specified fn of instrumentations
+   * @method patch
+   */
   patch () {
     const instrumentedModules = _.uniq(instrumentations.map((instrumentation) => instrumentation.module))
 
     // Instrunent modules: hook require
-    hook(instrumentedModules, (moduleExports, moduleName, moduleBaseDir) =>
-      this.hookModule(moduleExports, moduleName, moduleBaseDir))
+    hook(instrumentedModules, this.hookModule.bind(this))
 
     debug('Patched')
   }
 
   /**
-  * Manually hook a module, useful when require-in-the-middle does not work,
-  * such as when you are using ESM.
-  * @method hookModule
-  * @param {Object} module
-  * @param {string} moduleName
-  * @param {string} moduleBaseDir
-  */
+   * Manually hook a module, useful when require-in-the-middle does not work,
+   * such as when you are using ESM.
+   * @method hookModule
+   * @param {Object} module
+   * @param {string} moduleName
+   * @param {string} moduleBaseDir
+   */
   hookModule (moduleExports, moduleName, moduleBaseDir) {
     let moduleVersion
 
@@ -66,15 +62,17 @@ class Instrument {
     if (moduleBaseDir) {
       const packageJSON = path.join(moduleBaseDir, 'package.json')
       // eslint-disable-next-line
-        moduleVersion = require(packageJSON).version
+      moduleVersion = require(packageJSON).version
     }
-
     // Apply instrumentations
     instrumentations
       .filter((instrumentation) => instrumentation.module === moduleName)
       .filter((instrumentation) => {
         // Core modules don't have version number
-        if (_.isUndefined(moduleVersion) || !_.isArray(instrumentation.supportedVersions)) {
+        if (
+          _.isUndefined(moduleVersion) ||
+          !_.isArray(instrumentation.supportedVersions)
+        ) {
           return true
         }
 
@@ -82,22 +80,35 @@ class Instrument {
           semver.satisfies(moduleVersion, supportedVersion))
       })
       .forEach((instrumentation) => {
-        instrumentation.patch(moduleExports, this._tracers, this._options)
+        let moduleToPatch = moduleExports
+        if (instrumentation.file) {
+          // eslint-disable-next-line
+          moduleToPatch = require(path.join(
+            moduleBaseDir,
+            instrumentation.file
+          ))
+        }
+        instrumentation.patch(moduleToPatch, this._tracers, this._options)
         this._instrumented.set(moduleExports, instrumentation)
 
-        debug(`Instrumentation "${instrumentation.name}" applied on module "${moduleName}"`, {
-          moduleVersion,
-          supportedVersions: instrumentation.supportedVersions
-        })
+        debug(
+          `Instrumentation "${
+            instrumentation.name
+          }" applied on module "${moduleName}"`,
+          {
+            moduleVersion,
+            supportedVersions: instrumentation.supportedVersions
+          }
+        )
       })
 
     return moduleExports
   }
 
   /**
-  * Applies unpatch fn of instrumentations
-  * @method unpatch
-  */
+   * Applies unpatch fn of instrumentations
+   * @method unpatch
+   */
   unpatch () {
     this._instrumented.forEach((instrumentation, moduleExports) => {
       instrumentation.unpatch(moduleExports)
