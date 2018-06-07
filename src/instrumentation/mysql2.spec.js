@@ -25,7 +25,7 @@ describe('instrumentation: mysql2', () => {
     instrumentation.patch(mysql2, [tracer])
 
     db = knex({
-      client: 'mysql',
+      client: 'mysql2',
       connection: process.env.MYSQL_URI
     })
   })
