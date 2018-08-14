@@ -44,7 +44,7 @@ class Instrument {
   patch () {
     const instrumentedModules = _.uniq(instrumentations.map((instrumentation) => instrumentation.module))
 
-    // Instrunent modules: hook require
+    // Instrument modules: hook require
     hook(instrumentedModules, (moduleExports, moduleName, moduleBaseDir) =>
       this.hookModule(moduleExports, moduleName, moduleBaseDir))
 
