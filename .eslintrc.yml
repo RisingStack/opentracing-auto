@@ -5,7 +5,7 @@
     mocha: true
     es6: true
   parserOptions:
-    sourceType: strict
+    sourceType: script
   rules:
     generator-star-spacing:
       - 2
@@ -41,7 +41,7 @@
       - never
     strict:
       - 2
-      - global
+      - never
     arrow-parens:
       - 2
       - always

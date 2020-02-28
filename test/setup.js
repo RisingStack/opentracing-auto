@@ -1,5 +1,3 @@
-'use strict'
-
 const sinon = require('sinon')
 const chai = require('chai')
 const sinonChai = require('sinon-chai')
@@ -24,7 +22,7 @@ before(() => {
 })
 
 beforeEach(function beforeEach () {
-  this.sandbox = sinon.sandbox.create()
+  this.sandbox = sinon.createSandbox()
 })
 
 afterEach(function afterEach () {

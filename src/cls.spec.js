@@ -1,5 +1,3 @@
-'use strict'
-
 const { expect } = require('chai')
 const { Tags } = require('opentracing')
 const cls = require('cls-hooked')

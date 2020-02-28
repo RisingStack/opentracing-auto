@@ -1,7 +1,5 @@
-'use strict'
-
+const axios = require('axios')
 const http = require('http')
-const request = require('request-promise-native')
 const nock = require('nock')
 const { expect } = require('chai')
 const { Tracer, Tags } = require('opentracing')
@@ -41,8 +39,7 @@ describe('instrumentation: httpClient', () => {
         .get('/foo')
         .reply(200)
 
-      await request({
-        uri: 'http://risingstack.com/foo',
+      await axios.get('http://risingstack.com:80/foo', {
         query: { token: 'secret' }
       })
 
@@ -69,15 +66,16 @@ describe('instrumentation: httpClient', () => {
     })
 
     it('should start and finish span with https', async () => {
-      // WARNING: nock doesn't work well with https instrumentation
-      // create real request
+      nock('https://risingstack.com')
+        .get('/')
+        .reply(200)
 
-      await request('https://risingstack.com')
+      await axios.get('https://risingstack.com/')
 
       expect(cls.startChildSpan).to.be.calledWith(tracer, instrumentation.OPERATION_NAME, {
         tags: {
           [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_CLIENT,
-          [Tags.HTTP_URL]: 'https://risingstack.com:443/',
+          [Tags.HTTP_URL]: 'https://risingstack.com/',
           [Tags.HTTP_METHOD]: 'GET'
         }
       })
@@ -90,7 +88,7 @@ describe('instrumentation: httpClient', () => {
         .get('/')
         .reply(400)
 
-      return request('http://risingstack.com')
+      return axios.get('http://risingstack.com')
         .catch(() => {
           expect(mockChildSpan.setTag).to.be.calledWith(Tags.ERROR, true)
         })
@@ -101,14 +99,14 @@ describe('instrumentation: httpClient', () => {
         .get('/')
         .replyWithError('My Error')
 
-      return request('http://risingstack.com')
+      return axios.get('http://risingstack.com')
         .catch((err) => {
           expect(mockChildSpan.setTag).to.be.calledWith(Tags.ERROR, true)
           expect(mockChildSpan.log).to.be.calledWith({
             event: 'error',
-            'error.object': err.cause,
-            message: err.cause.message,
-            stack: err.cause.stack
+            'error.object': err,
+            message: err.message,
+            stack: err.stack
           })
           expect(mockChildSpan.finish).to.have.callCount(1)
         })
@@ -127,11 +125,10 @@ describe('instrumentation: httpClient', () => {
     it('should add HTTP timings when response is in flow mode', async function () {
       this.sandbox.spy(tracer, 'startSpan')
 
-      await request('http://risingstack.com')
+      await axios.get('http://risingstack.com')
 
       expect(tracer.startSpan).to.be.calledWith(instrumentation.OPERATION_NAME_DNS_LOOKUP)
       expect(tracer.startSpan).to.be.calledWith(instrumentation.OPERATION_NAME_CONNECTION)
-      expect(tracer.startSpan).to.be.calledWith(instrumentation.OPERATION_NAME_SSL)
       expect(tracer.startSpan).to.be.calledWith(instrumentation.OPERATION_NAME_TIME_TO_FIRST_BYTE)
       expect(tracer.startSpan).to.be.calledWith(instrumentation.OPERATION_NAME_CONTENT_TRANSFER)
     })

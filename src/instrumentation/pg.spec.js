@@ -1,5 +1,3 @@
-'use strict'
-
 const pg = require('pg')
 const knex = require('knex')
 const { expect } = require('chai')

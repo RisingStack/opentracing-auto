@@ -1,5 +1,3 @@
-'use strict'
-
 const debug = require('debug')('opentracing-auto:instrumentation:redis')
 const { Tags } = require('opentracing')
 const shimmer = require('shimmer')

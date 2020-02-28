@@ -1,5 +1,3 @@
-'use strict'
-
 const redis = require('redis')
 const { expect } = require('chai')
 const { Tracer, Tags } = require('opentracing')

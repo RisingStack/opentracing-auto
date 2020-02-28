@@ -1,5 +1,3 @@
-'use strict'
-
 const request = require('super-request')
 const { expect } = require('chai')
 const { Tracer, Tags } = require('opentracing')

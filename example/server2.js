@@ -1,5 +1,3 @@
-'use strict'
-
 const jaeger = require('jaeger-client')
 const UDPSender = require('jaeger-client/dist/src/reporters/udp_sender').default
 // eslint-disable-next-line
@@ -18,8 +16,8 @@ const instrument = new Instrument({
   httpTimings: true
 })
 
+const axios = require('axios')
 const express = require('express')
-const request = require('request-promise-native')
 const monk = require('monk')
 
 const db = monk('localhost/mydb', (err) => {
@@ -37,7 +35,7 @@ sites.createIndex('name')
 app.get('/site/:id', async (req, res, next) => {
   await sites.insert({ name: 'risingstack', url: 'https://risingstack.com' })
   const site = await sites.findOne({ name: 'risingstack' })
-  await request(site.url)
+  await axios.get(site.url)
   next(new Error('My Error'))
 })
 

@@ -1,5 +1,3 @@
-'use strict'
-
 const mysql = require('mysql')
 const knex = require('knex')
 const { expect } = require('chai')

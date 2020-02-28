@@ -1,5 +1,3 @@
-'use strict'
-
 const debug = require('debug')('opentracing-auto:instrumentation:mysql')
 const { Tags } = require('opentracing')
 const shimmer = require('shimmer')

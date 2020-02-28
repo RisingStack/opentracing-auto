@@ -1,5 +1,3 @@
-'use strict'
-
 const path = require('path')
 const debug = require('debug')('opentracing-auto:instrument')
 const semver = require('semver')
@@ -45,8 +43,9 @@ class Instrument {
     const instrumentedModules = _.uniq(instrumentations.map((instrumentation) => instrumentation.module))
 
     // Instrunent modules: hook require
-    hook(instrumentedModules, (moduleExports, moduleName, moduleBaseDir) =>
-      this.hookModule(moduleExports, moduleName, moduleBaseDir))
+    hook(instrumentedModules, (moduleExports, moduleName, moduleBaseDir) => this.hookModule(
+      moduleExports, moduleName, moduleBaseDir
+    ))
 
     debug('Patched')
   }
@@ -78,8 +77,9 @@ class Instrument {
           return true
         }
 
-        return instrumentation.supportedVersions.some((supportedVersion) =>
-          semver.satisfies(moduleVersion, supportedVersion))
+        return instrumentation
+          .supportedVersions
+          .some((supportedVersion) => semver.satisfies(moduleVersion, supportedVersion))
       })
       .forEach((instrumentation) => {
         instrumentation.patch(moduleExports, this._tracers, this._options)

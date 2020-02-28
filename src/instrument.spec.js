@@ -1,5 +1,3 @@
-'use strict'
-
 const { expect } = require('chai')
 const { Tracer } = require('opentracing')
 const Instrument = require('./instrument')

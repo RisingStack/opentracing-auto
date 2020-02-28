@@ -1,5 +1,3 @@
-'use strict'
-
 const debug = require('debug')('opentracing-auto:instrumentation:express')
 const { Tags, FORMAT_HTTP_HEADERS } = require('opentracing')
 const shimmer = require('shimmer')
@@ -25,15 +23,14 @@ function patch (express, tracers) {
       // start
       const url = `${req.protocol}://${req.get('host')}${req.originalUrl}`
       const parentSpanContexts = tracers.map((tracer) => tracer.extract(FORMAT_HTTP_HEADERS, req.headers))
-      const spans = parentSpanContexts.map((parentSpanContext, key) =>
-        cls.startRootSpan(tracers[key], OPERATION_NAME, {
-          childOf: parentSpanContext,
-          tags: {
-            [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER,
-            [Tags.HTTP_URL]: url,
-            [Tags.HTTP_METHOD]: req.method
-          }
-        }))
+      const spans = parentSpanContexts.map((parentSpanContext, key) => cls.startRootSpan(tracers[key], OPERATION_NAME, {
+        childOf: parentSpanContext,
+        tags: {
+          [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER,
+          [Tags.HTTP_URL]: url,
+          [Tags.HTTP_METHOD]: req.method
+        }
+      }))
       debug(`Operation started ${OPERATION_NAME}`, {
         [Tags.HTTP_URL]: url,
         [Tags.HTTP_METHOD]: req.method

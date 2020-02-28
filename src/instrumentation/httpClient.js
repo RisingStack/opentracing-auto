@@ -1,5 +1,3 @@
-'use strict'
-
 const url = require('url')
 const debug = require('debug')('opentracing-auto:instrumentation:httpClient')
 const { Tags, FORMAT_HTTP_HEADERS } = require('opentracing')

@@ -1,5 +1,3 @@
-'use strict'
-
 const express = require('./express')
 const expressError = require('./expressError')
 const httpClient = require('./httpClient')

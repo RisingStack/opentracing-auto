@@ -1,5 +1,3 @@
-'use strict'
-
 const jaeger = require('jaeger-client')
 const UDPSender = require('jaeger-client/dist/src/reporters/udp_sender').default
 // eslint-disable-next-line
@@ -18,12 +16,8 @@ const instrument = new Instrument({
   httpTimings: true
 })
 
-// eslint-disable-next-line
-const http = require('http')
-// eslint-disable-next-line
 const express = require('express')
-// eslint-disable-next-line
-const request = require('request-promise-native')
+const axios = require('axios')
 
 const port = 3000
 
@@ -31,7 +25,7 @@ const app = express()
 
 app.get('/', async (req, res, next) => {
   try {
-    await request('http://localhost:3001/site/risingstack')
+    await axios.get('http://localhost:3001/site/risingstack')
   } catch (err) {
     next(err)
     return
