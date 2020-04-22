@@ -1,6 +1,6 @@
 {
-  "name": "@guanghe/primary-opentracing-auto",
-  "version": "1.5.6",
+  "name": "@risingstack/opentracing-auto",
+  "version": "1.5.2",
   "description": "Out of the box OpenTracing instrumentation for Node.js",
   "main": "src/index.js",
   "scripts": {
