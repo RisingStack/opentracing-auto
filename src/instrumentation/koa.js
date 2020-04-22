@@ -1,15 +1,16 @@
 'use strict'
 
-const debug = require('debug')('opentracing-auto:instrumentation:express')
+const debug = require('debug')('opentracing-auto:instrumentation:koa')
 const { Tags, FORMAT_HTTP_HEADERS } = require('opentracing')
 const shimmer = require('shimmer')
-const METHODS = require('methods').concat('use', 'route', 'param', 'all')
+
+const METHODS = ['use']
 const cls = require('../cls')
 
 const OPERATION_NAME = 'http_server'
 const TAG_REQUEST_PATH = 'request_path'
 
-function patch (express, tracers) {
+function patch (koa, tracers) {
   function applicationActionWrap (method) {
     return function applicationActionWrapped (...args) {
       if (!this._jaeger_trace_patched && !this._router) {
@@ -22,38 +23,37 @@ function patch (express, tracers) {
 
   function middleware (ctx, next) {
     return cls.runAndReturn(() => {
-      const { req, res } = ctx
       // start
-      const url = `${req.protocol}://${req.get('host')}${req.originalUrl}`
-      const parentSpanContexts = tracers.map((tracer) => tracer.extract(FORMAT_HTTP_HEADERS, req.headers))
+      const url = `${ctx.protocol}://${ctx.get('host')}${ctx.originalUrl}`
+      const parentSpanContexts = tracers.map((tracer) => tracer.extract(FORMAT_HTTP_HEADERS, ctx.headers))
       const spans = parentSpanContexts.map((parentSpanContext, key) =>
         cls.startRootSpan(tracers[key], OPERATION_NAME, {
           childOf: parentSpanContext,
           tags: {
             [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER,
             [Tags.HTTP_URL]: url,
-            [Tags.HTTP_METHOD]: req.method
+            [Tags.HTTP_METHOD]: ctx.method
           }
         }))
       debug(`Operation started ${OPERATION_NAME}`, {
         [Tags.HTTP_URL]: url,
-        [Tags.HTTP_METHOD]: req.method
+        [Tags.HTTP_METHOD]: ctx.method
       })
 
-      if (req.connection.remoteAddress) {
-        spans.forEach((span) => span.log({ peerRemoteAddress: req.connection.remoteAddress }))
+      if (ctx.ip) {
+        spans.forEach((span) => span.log({ peerRemoteAddress: ctx.ip }))
       }
 
       // end
+      const { res } = ctx
       const originalEnd = res.end
-
       res.end = function (...args) {
-        res.end = originalEnd
+        ctx.res.end = originalEnd
         const returned = res.end.call(this, ...args)
 
-        if (req.route && req.route.path) {
-          spans.forEach((span) => span.setTag(TAG_REQUEST_PATH, req.route.path))
-        }
+        // if (req.route && req.route.path) {
+        //   spans.forEach((span) => span.setTag(TAG_REQUEST_PATH, req.route.path))
+        // }
 
         spans.forEach((span) => span.setTag(Tags.HTTP_STATUS_CODE, res.statusCode))
 
@@ -79,16 +79,16 @@ function patch (express, tracers) {
   }
 
   METHODS.forEach((method) => {
-    shimmer.wrap(express.application, method, applicationActionWrap)
+    shimmer.wrap(koa.prototype, method, applicationActionWrap)
     debug(`Method patched ${method}`)
   })
 
   debug('Patched')
 }
 
-function unpatch (express) {
+function unpatch (koa) {
   METHODS.forEach((method) => {
-    shimmer.unwrap(express.application, method)
+    shimmer.unwrap(koa.prototype, method)
     debug(`Method unpatched ${method}`)
   })
 
