@@ -29,8 +29,8 @@ function patch (express, tracers) {
 
       shimmer.wrap(lastLayer, 'handle_error', (originalHandleError) =>
         function (err, req, res, next) {
-          const rootSpans = tracers.map((tracer) => cls.getRootSpan(tracer))
-
+          let rootSpans = tracers.map((tracer) => cls.getRootSpan(tracer))
+          rootSpans = rootSpans.filter((rootSpan) => rootSpan)
           if (rootSpans.length) {
             rootSpans.forEach((rootSpan) => rootSpan.setTag(Tags.ERROR, true))
           }
