@@ -99,7 +99,7 @@ function patch (http, tracers, { httpTimings } = {}) {
       }
 
       const uri = extractUrl(options)
-      const SPAN_NAME = uri || OPERATION_NAME
+      const SPAN_NAME = options.path || options.pathName || OPERATION_NAME
       const method = options.method || 'GET'
       const spans = tracers.map((tracer) => cls.startChildSpan(tracer, SPAN_NAME, {
         tags: {
