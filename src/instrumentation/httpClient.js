@@ -101,13 +101,19 @@ function patch (http, tracers, { httpTimings } = {}) {
       const uri = extractUrl(options)
       const SPAN_NAME = options.path || options.pathName || OPERATION_NAME
       const method = options.method || 'GET'
-      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, SPAN_NAME, {
-        tags: {
-          [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_CLIENT,
-          [Tags.HTTP_URL]: uri,
-          [Tags.HTTP_METHOD]: method
+      const spans = tracers.map((tracer) => {
+        if (uri.indexOf('/api/traces') >= 0) {
+          debug(`match /api/traces skip span ${uri}`)
+          return null
         }
-      }))
+        return cls.startChildSpan(tracer, SPAN_NAME, {
+          tags: {
+            [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_CLIENT,
+            [Tags.HTTP_URL]: uri,
+            [Tags.HTTP_METHOD]: method
+          }
+        })
+      }).filter((span) => !!span)
 
       const timings = {
         begin: undefined,

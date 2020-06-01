@@ -27,15 +27,20 @@ function patch (express, tracers) {
       const url = `${req.protocol}://${req.get('host')}${req.originalUrl}`
       const parentSpanContexts = tracers.map((tracer) => tracer.extract(FORMAT_HTTP_HEADERS, req.headers))
       const SPAN_NAME = getOriginUrlWithoutQs(req.originalUrl) || OPERATION_NAME
-      const spans = parentSpanContexts.map((parentSpanContext, key) =>
-        cls.startRootSpan(tracers[key], SPAN_NAME, {
+      const spans = parentSpanContexts.map((parentSpanContext, key) => {
+        if (req.method === 'OPTIONS') {
+          debug(`OPTIONS skiped ${SPAN_NAME}`)
+          return null
+        }
+        return cls.startRootSpan(tracers[key], SPAN_NAME, {
           childOf: parentSpanContext,
           tags: {
             [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER,
             [Tags.HTTP_URL]: url,
             [Tags.HTTP_METHOD]: req.method
           }
-        }))
+        })
+      }).filter((span) => !!span)
       debug(`Operation started ${SPAN_NAME}`, {
         [Tags.HTTP_URL]: url,
         [Tags.HTTP_METHOD]: req.method

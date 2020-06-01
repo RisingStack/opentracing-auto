@@ -1,3 +1,5 @@
+/* eslint-disable import/order */
+
 'use strict'
 
 const debug = require('debug')('opentracing-auto:instrumentation:koa')
@@ -28,15 +30,20 @@ function patch (koa, tracers) {
       const url = `${ctx.protocol}://${ctx.get('host')}${ctx.originalUrl}`
       const SPAN_NAME = getOriginUrlWithoutQs(ctx.originalUrl) || OPERATION_NAME
       const parentSpanContexts = tracers.map((tracer) => tracer.extract(FORMAT_HTTP_HEADERS, ctx.headers))
-      const spans = parentSpanContexts.map((parentSpanContext, key) =>
-        cls.startRootSpan(tracers[key], SPAN_NAME, {
+      const spans = parentSpanContexts.map((parentSpanContext, key) => {
+        if (ctx.method === 'OPTIONS') {
+          debug(`OPTIONS skiped ${SPAN_NAME}`)
+          return null
+        }
+        return cls.startRootSpan(tracers[key], SPAN_NAME, {
           childOf: parentSpanContext,
           tags: {
             [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER,
             [Tags.HTTP_URL]: url,
             [Tags.HTTP_METHOD]: ctx.method
           }
-        }))
+        })
+      }).filter((span) => !!span)
       debug(`Operation started ${SPAN_NAME}`, {
         [Tags.HTTP_URL]: url,
         [Tags.HTTP_METHOD]: ctx.method
