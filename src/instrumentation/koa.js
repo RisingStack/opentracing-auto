@@ -25,9 +25,10 @@ function patch (koa, tracers) {
     return cls.runAndReturn(() => {
       // start
       const url = `${ctx.protocol}://${ctx.get('host')}${ctx.originalUrl}`
+      const SPAN_NAME = ctx.originalUrl || OPERATION_NAME
       const parentSpanContexts = tracers.map((tracer) => tracer.extract(FORMAT_HTTP_HEADERS, ctx.headers))
       const spans = parentSpanContexts.map((parentSpanContext, key) =>
-        cls.startRootSpan(tracers[key], OPERATION_NAME, {
+        cls.startRootSpan(tracers[key], SPAN_NAME, {
           childOf: parentSpanContext,
           tags: {
             [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER,
@@ -35,7 +36,7 @@ function patch (koa, tracers) {
             [Tags.HTTP_METHOD]: ctx.method
           }
         }))
-      debug(`Operation started ${OPERATION_NAME}`, {
+      debug(`Operation started ${SPAN_NAME}`, {
         [Tags.HTTP_URL]: url,
         [Tags.HTTP_METHOD]: ctx.method
       })
@@ -60,7 +61,7 @@ function patch (koa, tracers) {
         if (res.statusCode >= 400) {
           spans.forEach((span) => span.setTag(Tags.ERROR, true))
 
-          debug(`Operation error captured ${OPERATION_NAME}`, {
+          debug(`Operation error captured ${SPAN_NAME}`, {
             reason: 'Bad status code',
             statusCode: res.statusCode
           })
@@ -68,7 +69,7 @@ function patch (koa, tracers) {
 
         spans.forEach((span) => span.finish())
 
-        debug(`Operation finished ${OPERATION_NAME}`, {
+        debug(`Operation finished ${SPAN_NAME}`, {
           [Tags.HTTP_STATUS_CODE]: res.statusCode
         })
 

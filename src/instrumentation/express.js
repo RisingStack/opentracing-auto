@@ -25,8 +25,9 @@ function patch (express, tracers) {
       // start
       const url = `${req.protocol}://${req.get('host')}${req.originalUrl}`
       const parentSpanContexts = tracers.map((tracer) => tracer.extract(FORMAT_HTTP_HEADERS, req.headers))
+      const SPAN_NAME = req.originalUrl || OPERATION_NAME
       const spans = parentSpanContexts.map((parentSpanContext, key) =>
-        cls.startRootSpan(tracers[key], OPERATION_NAME, {
+        cls.startRootSpan(tracers[key], SPAN_NAME, {
           childOf: parentSpanContext,
           tags: {
             [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER,
@@ -34,7 +35,7 @@ function patch (express, tracers) {
             [Tags.HTTP_METHOD]: req.method
           }
         }))
-      debug(`Operation started ${OPERATION_NAME}`, {
+      debug(`Operation started ${SPAN_NAME}`, {
         [Tags.HTTP_URL]: url,
         [Tags.HTTP_METHOD]: req.method
       })
@@ -59,7 +60,7 @@ function patch (express, tracers) {
         if (res.statusCode >= 400) {
           spans.forEach((span) => span.setTag(Tags.ERROR, true))
 
-          debug(`Operation error captured ${OPERATION_NAME}`, {
+          debug(`Operation error captured ${SPAN_NAME}`, {
             reason: 'Bad status code',
             statusCode: res.statusCode
           })
@@ -67,7 +68,7 @@ function patch (express, tracers) {
 
         spans.forEach((span) => span.finish())
 
-        debug(`Operation finished ${OPERATION_NAME}`, {
+        debug(`Operation finished ${SPAN_NAME}`, {
           [Tags.HTTP_STATUS_CODE]: res.statusCode
         })
 

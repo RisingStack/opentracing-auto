@@ -99,8 +99,9 @@ function patch (http, tracers, { httpTimings } = {}) {
       }
 
       const uri = extractUrl(options)
+      const SPAN_NAME = uri || OPERATION_NAME
       const method = options.method || 'GET'
-      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, OPERATION_NAME, {
+      const spans = tracers.map((tracer) => cls.startChildSpan(tracer, SPAN_NAME, {
         tags: {
           [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_CLIENT,
           [Tags.HTTP_URL]: uri,
@@ -118,7 +119,7 @@ function patch (http, tracers, { httpTimings } = {}) {
       }
       let isFinish = false
 
-      debug(`Operation started ${OPERATION_NAME}`, {
+      debug(`Operation started ${SPAN_NAME}`, {
         [Tags.HTTP_URL]: uri,
         [Tags.HTTP_METHOD]: method
       })
@@ -144,7 +145,7 @@ function patch (http, tracers, { httpTimings } = {}) {
         if (res.statusCode > 399) {
           spans.forEach((span) => span.setTag(Tags.ERROR, true))
 
-          debug(`Operation error captured ${OPERATION_NAME}`, {
+          debug(`Operation error captured ${SPAN_NAME}`, {
             reason: 'Bad status code',
             statusCode: res.statusCode
           })
@@ -168,7 +169,7 @@ function patch (http, tracers, { httpTimings } = {}) {
           finish(res)
         })
 
-        debug(`Operation finished ${OPERATION_NAME}`, {
+        debug(`Operation finished ${SPAN_NAME}`, {
           [Tags.HTTP_STATUS_CODE]: res.statusCode
         })
 
@@ -207,7 +208,7 @@ function patch (http, tracers, { httpTimings } = {}) {
             stack: err.stack
           }))
 
-          debug(`Operation error captured ${OPERATION_NAME}`, {
+          debug(`Operation error captured ${SPAN_NAME}`, {
             reason: 'Error event',
             errorMessage: err.message
           })

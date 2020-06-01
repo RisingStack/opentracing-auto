@@ -29,6 +29,7 @@ function patch (express, tracers) {
 
       shimmer.wrap(lastLayer, 'handle_error', (originalHandleError) =>
         function (err, req, res, next) {
+          const SPAN_NAME = req.originalUrl || OPERATION_NAME
           let rootSpans = tracers.map((tracer) => cls.getRootSpan(tracer))
           rootSpans = rootSpans.filter((rootSpan) => rootSpan)
           if (rootSpans.length) {
@@ -36,13 +37,13 @@ function patch (express, tracers) {
           }
 
           // error span
-          const spans = tracers.map((tracer) => cls.startChildSpan(tracer, OPERATION_NAME, {
+          const spans = tracers.map((tracer) => cls.startChildSpan(tracer, SPAN_NAME, {
             tags: {
               [Tags.ERROR]: true
             }
           }))
 
-          debug(`Operation started ${OPERATION_NAME}`)
+          debug(`Operation started ${SPAN_NAME}`)
 
           spans.forEach((span) => span.log({
             event: 'error',
@@ -51,13 +52,13 @@ function patch (express, tracers) {
             stack: err.stack
           }))
 
-          debug(`Operation error captured ${OPERATION_NAME}`, {
+          debug(`Operation error captured ${SPAN_NAME}`, {
             reason: 'Error handler'
           })
 
           spans.forEach((span) => span.finish())
 
-          debug(`Operation finished ${OPERATION_NAME}`)
+          debug(`Operation finished ${SPAN_NAME}`)
 
           return originalHandleError.call(this, err, req, res, next)
         })
