@@ -6,6 +6,7 @@ const shimmer = require('shimmer')
 
 const METHODS = ['use']
 const cls = require('../cls')
+const { getOriginUrlWithoutQs } = require('./utils')
 
 const OPERATION_NAME = 'http_server'
 const TAG_REQUEST_PATH = 'request_path'
@@ -25,7 +26,7 @@ function patch (koa, tracers) {
     return cls.runAndReturn(() => {
       // start
       const url = `${ctx.protocol}://${ctx.get('host')}${ctx.originalUrl}`
-      const SPAN_NAME = ctx.originalUrl || OPERATION_NAME
+      const SPAN_NAME = getOriginUrlWithoutQs(ctx.originalUrl) || OPERATION_NAME
       const parentSpanContexts = tracers.map((tracer) => tracer.extract(FORMAT_HTTP_HEADERS, ctx.headers))
       const spans = parentSpanContexts.map((parentSpanContext, key) =>
         cls.startRootSpan(tracers[key], SPAN_NAME, {

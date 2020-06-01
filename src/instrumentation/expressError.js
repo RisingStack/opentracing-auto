@@ -4,6 +4,8 @@ const debug = require('debug')('opentracing-auto:instrumentation:expressError')
 const shimmer = require('shimmer')
 const { Tags } = require('opentracing')
 const cls = require('../cls')
+const { getOriginUrlWithoutQs } = require('./utils')
+
 
 const OPERATION_NAME = 'express_error_handler'
 const wrappedLayers = new Set()
@@ -29,7 +31,7 @@ function patch (express, tracers) {
 
       shimmer.wrap(lastLayer, 'handle_error', (originalHandleError) =>
         function (err, req, res, next) {
-          const SPAN_NAME = req.originalUrl || OPERATION_NAME
+          const SPAN_NAME = getOriginUrlWithoutQs(req.originalUrl) || OPERATION_NAME
           let rootSpans = tracers.map((tracer) => cls.getRootSpan(tracer))
           rootSpans = rootSpans.filter((rootSpan) => rootSpan)
           if (rootSpans.length) {

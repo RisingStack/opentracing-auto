@@ -5,6 +5,7 @@ const { Tags, FORMAT_HTTP_HEADERS } = require('opentracing')
 const shimmer = require('shimmer')
 const METHODS = require('methods').concat('use', 'route', 'param', 'all')
 const cls = require('../cls')
+const { getOriginUrlWithoutQs } = require('./utils')
 
 const OPERATION_NAME = 'http_server'
 const TAG_REQUEST_PATH = 'request_path'
@@ -25,7 +26,7 @@ function patch (express, tracers) {
       // start
       const url = `${req.protocol}://${req.get('host')}${req.originalUrl}`
       const parentSpanContexts = tracers.map((tracer) => tracer.extract(FORMAT_HTTP_HEADERS, req.headers))
-      const SPAN_NAME = req.originalUrl || OPERATION_NAME
+      const SPAN_NAME = getOriginUrlWithoutQs(req.originalUrl) || OPERATION_NAME
       const spans = parentSpanContexts.map((parentSpanContext, key) =>
         cls.startRootSpan(tracers[key], SPAN_NAME, {
           childOf: parentSpanContext,
