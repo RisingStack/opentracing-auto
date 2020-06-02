@@ -9,7 +9,7 @@ const _ = require('lodash')
 const httpAgent = require('_http_agent')
 const semver = require('semver')
 const cls = require('../cls')
-const { getOriginalUrlWithoutQs } = require('./utils')
+const { getOriginUrlWithoutQs } = require('./utils')
 
 
 const OPERATION_NAME = 'http_request'
@@ -101,7 +101,7 @@ function patch (http, tracers, { httpTimings } = {}) {
       }
 
       const uri = extractUrl(options)
-      const SPAN_NAME = getOriginalUrlWithoutQs(options.path || options.pathName) || OPERATION_NAME
+      const SPAN_NAME = getOriginUrlWithoutQs(options.path || options.pathName) || OPERATION_NAME
       const method = options.method || 'GET'
       const spans = tracers.map((tracer) => {
         if (uri.indexOf('/api/traces') >= 0) {
