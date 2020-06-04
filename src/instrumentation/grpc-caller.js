@@ -42,8 +42,8 @@ function unpatch (grpcCaller) {
 }
 
 module.exports = {
-  name: 'grpc-caller',
-  module: 'grpc-caller',
+  name: '@guanghe/grpc-caller',
+  module: '@guanghe/grpc-caller',
   patch,
   unpatch
 }
