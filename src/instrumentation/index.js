@@ -7,6 +7,7 @@ const restify = require('./restify')
 const koa = require('./koa')
 const mali = require('./mali')
 const grpcCaller = require('./grpc-caller')
+const httpsClient = require('./https-client')
 
 module.exports = [
   express,
@@ -15,5 +16,6 @@ module.exports = [
   restify,
   koa,
   mali,
-  grpcCaller
+  grpcCaller,
+  httpsClient
 ]
