@@ -5,6 +5,7 @@ const expressError = require('./expressError')
 const httpClient = require('./httpClient')
 const restify = require('./restify')
 const koa = require('./koa')
+const koaV1 = require('./koa_v1')
 const mali = require('./mali')
 const grpcCaller = require('./grpc-caller')
 const httpsClient = require('./https-client')
@@ -17,5 +18,6 @@ module.exports = [
   koa,
   mali,
   grpcCaller,
-  httpsClient
+  httpsClient,
+  koaV1
 ]

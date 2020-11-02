@@ -125,3 +125,6 @@ Start your application with the `DEBUG=opentracing-auto*` environment variable.
 
 - More database instrumentation: Redis etc.
 - More messaging layer instrumentation: HTTP/2, GRPC, RabbitMQ, Kafka etc.
+
+## 3.x
+- support koa 1.x
