@@ -8,7 +8,7 @@ const shimmer = require('shimmer')
 
 const METHODS = ['use']
 const cls = require('../cls')
-const { getOriginUrlWithoutQs } = require('./utils')
+const { MIN_ERROR_CODE } = require('../constant')
 
 const OPERATION_NAME = 'http_server'
 const TAG_REQUEST_PATH = 'request_path'
@@ -28,7 +28,7 @@ function patch (koa, tracers) {
     return cls.runAndReturn(() => {
       // start
       const url = `${ctx.protocol}://${ctx.get('host')}${ctx.originalUrl}`
-      const SPAN_NAME = getOriginUrlWithoutQs(ctx.originalUrl) || OPERATION_NAME
+      const SPAN_NAME = ctx.path || OPERATION_NAME
       const parentSpanContexts = tracers.map((tracer) => tracer.extract(FORMAT_HTTP_HEADERS, ctx.headers))
       const spans = parentSpanContexts.map((parentSpanContext, key) => {
         if (ctx.method === 'OPTIONS') {
@@ -66,7 +66,7 @@ function patch (koa, tracers) {
 
         spans.forEach((span) => span.setTag(Tags.HTTP_STATUS_CODE, res.statusCode))
 
-        if (res.statusCode >= 400) {
+        if (res.statusCode >= MIN_ERROR_CODE) {
           spans.forEach((span) => span.setTag(Tags.ERROR, true))
 
           debug(`Operation error captured ${SPAN_NAME}`, {

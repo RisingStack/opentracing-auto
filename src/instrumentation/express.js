@@ -5,7 +5,7 @@ const { Tags, FORMAT_HTTP_HEADERS } = require('opentracing')
 const shimmer = require('shimmer')
 const METHODS = require('methods').concat('use', 'route', 'param', 'all')
 const cls = require('../cls')
-const { getOriginUrlWithoutQs } = require('./utils')
+const { MIN_ERROR_CODE } = require('../constant')
 
 const OPERATION_NAME = 'http_server'
 const TAG_REQUEST_PATH = 'request_path'
@@ -26,7 +26,7 @@ function patch (express, tracers) {
       // start
       const url = `${req.protocol}://${req.get('host')}${req.originalUrl}`
       const parentSpanContexts = tracers.map((tracer) => tracer.extract(FORMAT_HTTP_HEADERS, req.headers))
-      const SPAN_NAME = getOriginUrlWithoutQs(req.originalUrl) || OPERATION_NAME
+      const SPAN_NAME = req.route ? req.route.path : OPERATION_NAME
       const spans = parentSpanContexts.map((parentSpanContext, key) => {
         if (req.method === 'OPTIONS') {
           debug(`OPTIONS skiped ${SPAN_NAME}`)
@@ -63,7 +63,7 @@ function patch (express, tracers) {
 
         spans.forEach((span) => span.setTag(Tags.HTTP_STATUS_CODE, res.statusCode))
 
-        if (res.statusCode >= 400) {
+        if (res.statusCode >= MIN_ERROR_CODE) {
           spans.forEach((span) => span.setTag(Tags.ERROR, true))
 
           debug(`Operation error captured ${SPAN_NAME}`, {
