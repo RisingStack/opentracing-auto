@@ -12,18 +12,12 @@ const cls = require('../cls')
 const OPERATION_NAME = 'sql'
 
 function patch (sequelize, tracers) {
-  function applicationActionWrap (method) {
-    return function applicationActionWrapped (...args) {
-      if (!this._jaeger_trace_patched) {
-        this._jaeger_trace_patched = true
-        this[method] = query.bind(this)
-      }
-      return method.call(this, ...args)
-    }
-  }
+  var originQuery = sequelize.prototype.query
+  sequelize.prototype.query = query
 
   function query (sql, option) {
     const self = this
+    console.log(self)
     return cls.runAndReturn(() => {
       const SPAN_NAME = 'sql' || OPERATION_NAME
       const spans = tracers.map((tracer) => cls.startChildSpan(tracer, SPAN_NAME, {
@@ -38,7 +32,7 @@ function patch (sequelize, tracers) {
         [Tags.DB_STATEMENT]: sql
       })
 
-      return self.query(sql, option)
+      return originQuery.bind(self)(sql, option)
         .then((result) => {
           spans.forEach((span) => span.finish())
           return result
@@ -51,10 +45,10 @@ function patch (sequelize, tracers) {
     })
   }
 
-  METHODS.forEach((method) => {
-    shimmer.wrap(sequelize.prototype, method, applicationActionWrap)
-    debug(`Method patched ${method}`)
-  })
+  // METHODS.forEach((method) => {
+  //   shimmer.wrap(sequelize.prototype, method, applicationActionWrap)
+  //   debug(`Method patched ${method}`)
+  // })
 
   debug('Patched')
 }
