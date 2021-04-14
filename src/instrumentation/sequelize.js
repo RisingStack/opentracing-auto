@@ -12,12 +12,11 @@ const cls = require('../cls')
 const OPERATION_NAME = 'sql'
 
 function patch (sequelize, tracers) {
-  var originQuery = sequelize.prototype.query
+  const originQuery = sequelize.prototype.query
   sequelize.prototype.query = query
 
   function query (sql, option) {
     const self = this
-    console.log(self)
     return cls.runAndReturn(() => {
       const SPAN_NAME = 'sql' || OPERATION_NAME
       const spans = tracers.map((tracer) => cls.startChildSpan(tracer, SPAN_NAME, {
