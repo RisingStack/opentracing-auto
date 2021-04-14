@@ -40,6 +40,7 @@ function patch (sequelize, tracers) {
           spans.forEach((span) => span.setTag(Tags.ERROR, true))
           spans.forEach((span) => span.log({ error: err }))
           spans.forEach((span) => span.finish())
+          throw err
         })
     })
   }
