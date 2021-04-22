@@ -1,16 +1,19 @@
+/* eslint-disable import/order */
+
 'use strict'
 
-const debug = require('debug')('opentracing-auto:instrumentation:express')
+const debug = require('debug')('opentracing-auto:instrumentation:koa')
 const { Tags, FORMAT_HTTP_HEADERS } = require('opentracing')
 const shimmer = require('shimmer')
-const METHODS = require('methods').concat('use', 'route', 'param', 'all')
+
+const METHODS = ['use']
 const cls = require('../cls')
 const { MIN_ERROR_CODE } = require('../constant')
 
 const OPERATION_NAME = 'http_server'
 const TAG_REQUEST_PATH = 'request_path'
 
-function patch (express, tracers) {
+function patch (koa, tracers) {
   function applicationActionWrap (method) {
     return function applicationActionWrapped (...args) {
       if (!this._jaeger_trace_patched && !this._router) {
@@ -21,14 +24,14 @@ function patch (express, tracers) {
     }
   }
 
-  function middleware (req, res, next) {
+  function middleware (ctx, next) {
     return cls.runAndReturn(() => {
       // start
-      const url = `${req.protocol}://${req.get('host')}${req.originalUrl}`
-      const parentSpanContexts = tracers.map((tracer) => tracer.extract(FORMAT_HTTP_HEADERS, req.headers))
-      const SPAN_NAME = req.route ? req.route.path : OPERATION_NAME
+      const url = `${ctx.protocol}://${ctx.get('host')}${ctx.originalUrl}`
+      const SPAN_NAME = ctx.path || OPERATION_NAME
+      const parentSpanContexts = tracers.map((tracer) => tracer.extract(FORMAT_HTTP_HEADERS, ctx.headers))
       const spans = parentSpanContexts.map((parentSpanContext, key) => {
-        if (req.method === 'OPTIONS') {
+        if (ctx.method === 'OPTIONS') {
           debug(`OPTIONS skiped ${SPAN_NAME}`)
           return null
         }
@@ -37,29 +40,29 @@ function patch (express, tracers) {
           tags: {
             [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER,
             [Tags.HTTP_URL]: url,
-            [Tags.HTTP_METHOD]: req.method
+            [Tags.HTTP_METHOD]: ctx.method
           }
         })
       }).filter((span) => !!span)
       debug(`Operation started ${SPAN_NAME}`, {
         [Tags.HTTP_URL]: url,
-        [Tags.HTTP_METHOD]: req.method
+        [Tags.HTTP_METHOD]: ctx.method
       })
 
-      if (req.connection.remoteAddress) {
-        spans.forEach((span) => span.log({ peerRemoteAddress: req.connection.remoteAddress }))
+      if (ctx.ip) {
+        spans.forEach((span) => span.log({ peerRemoteAddress: ctx.ip }))
       }
 
       // end
+      const { res } = ctx
       const originalEnd = res.end
-
       res.end = function (...args) {
-        res.end = originalEnd
+        ctx.res.end = originalEnd
         const returned = res.end.call(this, ...args)
 
-        if (req.route && req.route.path) {
-          spans.forEach((span) => span.setTag(TAG_REQUEST_PATH, req.route.path))
-        }
+        // if (req.route && req.route.path) {
+        //   spans.forEach((span) => span.setTag(TAG_REQUEST_PATH, req.route.path))
+        // }
 
         spans.forEach((span) => span.setTag(Tags.HTTP_STATUS_CODE, res.statusCode))
 
@@ -80,22 +83,21 @@ function patch (express, tracers) {
 
         return returned
       }
-
       return next()
     })
   }
 
   METHODS.forEach((method) => {
-    shimmer.wrap(express.application, method, applicationActionWrap)
+    shimmer.wrap(koa.prototype, method, applicationActionWrap)
     debug(`Method patched ${method}`)
   })
 
   debug('Patched')
 }
 
-function unpatch (express) {
+function unpatch (koa) {
   METHODS.forEach((method) => {
-    shimmer.unwrap(express.application, method)
+    shimmer.unwrap(koa.prototype, method)
     debug(`Method unpatched ${method}`)
   })
 
@@ -103,9 +105,9 @@ function unpatch (express) {
 }
 
 module.exports = {
-  name: 'express',
-  module: 'express',
-  supportedVersions: ['4.x'],
+  name: 'koa',
+  module: 'koa',
+  supportedVersions: ['2.x'],
   TAG_REQUEST_PATH,
   OPERATION_NAME,
   patch,
