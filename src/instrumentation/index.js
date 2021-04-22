@@ -10,6 +10,7 @@ const mali = require('./mali')
 const grpcCaller = require('./grpc-caller')
 const httpsClient = require('./https-client')
 const sequelize = require('./sequelize')
+const ioredis = require('./ioredis')
 
 module.exports = [
   express,
@@ -21,5 +22,6 @@ module.exports = [
   grpcCaller,
   httpsClient,
   koaV1,
-  sequelize
+  sequelize,
+  ioredis
 ]
