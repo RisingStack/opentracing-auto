@@ -24,12 +24,12 @@ function patch (Redis, tracers) {
         const spans = tracers.map((tracer) => cls.startChildSpan(tracer, SPAN_NAME, {
           tags: {
             [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER,
-            [Tags.DB_TYPE]: self.getDialect(),
+            [Tags.DB_TYPE]: 'redis',
             [Tags.DB_STATEMENT]: statement
           }
         })).filter((span) => !!span)
         debug(`Operation started ${SPAN_NAME}`, {
-          [Tags.DB_TYPE]: self.getDialect(),
+          [Tags.DB_TYPE]: 'redis',
           [Tags.DB_STATEMENT]: statement
         })
 
